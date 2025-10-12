@@ -402,3 +402,10 @@ target/
 
 # Reference code
 src/sdl12main.cpp
+
+# Python venv
+tools/bin/
+tools/include/
+tools/lib/
+tools/lib64
+tools/pyvenv.cfg
