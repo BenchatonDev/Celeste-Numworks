@@ -399,3 +399,6 @@ FodyWeavers.xsd
 
 # Build data
 target/
+
+# Reference code
+src/sdl12main.cpp
