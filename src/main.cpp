@@ -1,12 +1,11 @@
 #include "eadk/eadk_vars.h"
+#include "eadk/eadkpp.h"
 
 // To test out rendering some sprites !
 #include "textures.h"
 
-// Implementation file maybe once I actually code it I'll
-// Make it into a cpp + h file combo to seperate declarations
-// And implementation
-#include "translation.cpp"
+// The actual game port THX Lemon :)
+#include "translation.hpp"
 
 #include <stdint.h>
 #include <stdbool.h>
