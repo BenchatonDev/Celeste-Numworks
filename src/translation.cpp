@@ -42,7 +42,9 @@ void emuInput() {
 template <size_t sprites, size_t rows, size_t columns>
 void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&sheet)[sprites][rows][columns], int colorOverride) {
     // Don't render empty sprites or sprites outside the sheet
-    if (mainSprtSheet[sprt] == 0 || sprt > 128) { return; };
+	static const int noSprite[8][8] = {0};
+    if (!memcmp(sheet[sprt], noSprite, sizeof(noSprite)) || 
+		sprt >= sprites || sprt < 0) { return; };
 
     // Setting the right values to flip or not the sprite
     int iX, iY = 0;
