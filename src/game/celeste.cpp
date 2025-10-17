@@ -1886,7 +1886,7 @@ void Celeste_P8_draw() {
    
 	// credits
 	if (is_title()) {
-		P8print("BACK+OK",58,80,5);
+		P8print("OK+BACK",58,80,5);
 		P8print("matt thorson",42,96,5);
 		P8print("noel berry",46,102,5);
 	}
