@@ -12,6 +12,7 @@ endef
 
 src = $(addprefix src/,\
   main.cpp \
+  translation.cpp \
   game/celeste.cpp \
   eadk/eadk_vars.cpp \
 )
