@@ -9,10 +9,10 @@
 #include <stdarg.h>
 #include <cstring>
 #include <assert.h>
+#include <memory>
 
-
-#define pico8XOrgin = 0
-#define pico8YOrgin = 0
+#define pico8XOrgin 0
+#define pico8YOrgin 0
 
 int palette[16];
 bool screenShake = true;
