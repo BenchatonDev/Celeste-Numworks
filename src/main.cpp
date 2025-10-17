@@ -16,9 +16,9 @@ bool running = true;
 
 int main(void) {
     // Clearing the screen first
-    EADK::Display::pushRectUniform(EADK::Screen::Rect, 0x000000);
+    Display::pushRectUniform(Screen::Rect, 0x000000);
 
-    #define PixelColor(i,x,y,sprtSheet) defltPallette[sprtSheet[i][y][x]]
+    #define PixelColor(i,x,y,sprtSheet) defltPalette[sprtSheet[i][y][x]]
     int placingX = -8*2;
     int placingY = 0;
 
@@ -31,7 +31,7 @@ int main(void) {
 
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                EADK::Display::pushRectUniform(EADK::Rect((placingX + 2*x),(placingY + 2*y),2,2), PixelColor(i,x,y,mainSprtSheet));
+                Display::pushRectUniform(Rect((placingX + 2*x),(placingY + 2*y),2,2), PixelColor(i,x,y,mainSprtSheet));
             }
         }
     }
@@ -44,7 +44,7 @@ int main(void) {
 
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                EADK::Display::pushRectUniform(EADK::Rect((placingX + 2*x),(placingY + 2*y),2,2), PixelColor(i,x,y,fontSprtSheet));
+                Display::pushRectUniform(Rect((placingX + 2*x),(placingY + 2*y),2,2), PixelColor(i,x,y,fontSprtSheet));
             }
         }
     }
