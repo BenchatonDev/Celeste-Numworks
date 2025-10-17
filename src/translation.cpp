@@ -75,27 +75,23 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&s
             // that are out of the emulated display area on the X axis
             if (sheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
 
-            Display::pushRectUniform(Rect((pico8XOrgin + (x + X + (iX * xCoefficient)) * renderScale),
-									(pico8YOrgin + (y + Y + (iY * yCoefficient)) * renderScale), renderScale,
+            Display::pushRectUniform(Rect((pico8XOrgin + (x + X + iX * xCoefficient) * renderScale),
+									(pico8YOrgin + (y + Y + iY * yCoefficient) * renderScale), renderScale,
 									renderScale), pixelColor(sprt, iX, iY, sheet, colorOverride));
         }
     }
 }
 #undef pixelColor
 
+// First piece code out of many to be a near 1:1 to
+// Lemon's code, I'm not reimagining the wheel :)
 void emuPrint(const char* str, int x, int y, int color) {
 	for (char c = *str; c; c = *(++str)) {
+		// This turns the character into it's ASCII number
+		// which is it's sprite number in the font sheet
 		c &= 0x7F;
-		/*
-		SDL_Rect srcrc = {8*(c%16), 8*(c/16)};
-		srcrc.x *= scale;
-		srcrc.y *= scale;
-		srcrc.w = srcrc.h = 8*scale;
-		
-		SDL_Rect dstrc = {x*scale, y*scale, scale, scale};
-		Xblit(font, &srcrc, screen, &dstrc, color, 0,0);
-		*/
 
+		// Just render the char whih the given color override
 		emuSprtRender(c, x, y, false, false, fontSprtSheet, color);
 		x += 4;
 	}
@@ -198,30 +194,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			assert(rows == 1 && cols == 1);
 
-			if (sprt >= 0) {
-                // My guess is that this is where to pull the sprite in the sheet
-                /*
-				SDL_Rect srcrc = {
-					8*(sprite % 16),
-					8*(sprite / 16)
-				};
-				srcrc.x *= renderScale;
-				srcrc.y *= renderScale;
-				srcrc.w = srcrc.h = renderScale*8;
-                */
-                
-                // And this is where to place it on the Emulated screen
-                /*
-				SDL_Rect dstrc = {
-					(x - cameraX)*renderScale, (y - cameraY)*renderScale,
-					renderScale, renderScale
-				};
-                */
-
-                // And this does the "rendering"
-				// Xblit(gfx, &srcrc, screen, &dstrc, 0,flipx,flipy);
-                emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
-			}
+        	emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
 		} break;
 
 		case CELESTE_P8_BTN: { //btn(b)
@@ -250,28 +223,24 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				/*
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-1), renderScale*cy, renderScale*3, renderScale}, drawColor(col));
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*cx, renderScale*(cy-1), renderScale, renderScale*3}, drawColor(col));
-				*/
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1)), (pico8YOrgin + cy), 3, 1), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + cx), (pico8YOrgin + (cy - 1)), 1, 3), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + cy * renderScale),
+										 3 * renderScale, 1 * renderScale), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + cx * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
+										 1 * renderScale, 3 * renderScale), drawColor(color));
+
 			} else if (r <= 2) {
-				/*
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-2), renderScale*(cy-1), renderScale*5, renderScale*3}, drawColor(col));
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-1), renderScale*(cy-2), renderScale*3, renderScale*5}, drawColor(col));
-				*/
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 1)), 5, 3), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 2)), 3, 5), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
+										 5 * renderScale, 3 * renderScale), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
+										 3 * renderScale, 5 * renderScale), drawColor(color));
+
 			} else if (r <= 3) {
-				/*
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-3), renderScale*(cy-1), renderScale*7, renderScale*3}, drawColor(col));
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-1), renderScale*(cy-3), renderScale*3, renderScale*7}, drawColor(col));
-				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-2), renderScale*(cy-2), renderScale*5, renderScale*5}, drawColor(col));
-				*/
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 3)), (pico8YOrgin + (cy - 1)), 7, 3), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 3)), 3, 7), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 2)), 5, 5), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 3) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
+										 7 * renderScale, 3 * renderScale), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 3) * renderScale),
+										 3 * renderScale, 7 * renderScale), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
+										 5 * renderScale, 5 * renderScale), drawColor(color));
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
@@ -387,6 +356,20 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 						Xblit(gfx, &srcrc, screen, &dstrc, 0, 0, 0); // TODO : replace with direct render of the tile
 						*/
+						
+						// Maybe it should be implemented this way ?
+						
+						/*
+							tile = the sprite index in the list
+						*/
+						
+						// Maybe it should be implemented like this ?
+						if (0) {
+							emuSprtRender(tile, (x * 8 - cameraX), (y * 8 - cameraY), false, false, mainSprtSheet, -1);
+							continue;
+						}
+
+						emuSprtRender(tile, (tx + x * 8 - cameraX), (ty + y * 8 - cameraY), false, false, mainSprtSheet, -1);
 					}
 				}
 			}
