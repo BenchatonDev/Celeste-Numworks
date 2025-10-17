@@ -31,7 +31,7 @@ else :
 
 from PIL import Image
 
-# Honnestly it's hastly made but it's not as slow as I expected
+# Honestly it's hastly made but it's not as slow as I expected
 # it uses a bunch of for loop to turn the provided image into an
 # array of 2D arrays, each representing 1 sprite in the
 def processSprtSheet(sprtSheet: str, tgtWidth: int, tgtHeight: int):
@@ -123,19 +123,6 @@ def prettyDataFormat(array: list):
             string += "}" + additionalStr + "\n\n"
     
     return string
-                    
-
-"""
-for i in processSprtSheet(mainSprtSheet, 128, 64):
-    if i == [["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-             ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"]]: continue
-"""
 
 # At last, time to place cram all this data into
 # an header file with some more ugly code, who cares
