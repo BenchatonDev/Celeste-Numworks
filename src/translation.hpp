@@ -7,7 +7,7 @@
 #include "game/tilemap.h"
 
 #include <stdarg.h>
-#include <math.h>
+#include <cmath>
 #include <cstring>
 #include <assert.h>
 #include <memory>
@@ -16,23 +16,25 @@
 #define pico8YOrgin 0
 #define pico8ScreenSize 128
 
-int palette[16];
-bool screenShake = true;
-bool pauseEmu = false;
-void *gameState = NULL;
+extern int palette[16];
+extern bool screenShake;
+extern bool pauseEmu;
+extern void *gameState;
 
 // I'm following Lemon's way
 // of handling the "emulator"'s
 // input because I don't know how
 // else I would :/ and it's the
 // safest way to go
-int emuBtnState = 0;
+extern int emuBtnState;
 
 // Input related variables :
-EADK::Keyboard::State state = 0;
-EADK::Keyboard::State lastState = 0;
+extern EADK::Keyboard::State state;
+extern EADK::Keyboard::State lastState;
 
 // Public functions
 void emuInit();
 
 void gameMain();
+
+void testFunction();

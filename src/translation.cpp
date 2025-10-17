@@ -2,6 +2,17 @@
 
 using namespace EADK;
 
+// Emulator related variables
+int palette[16];
+bool screenShake = true;
+bool pauseEmu = false;
+void *gameState = NULL;
+int emuBtnState = 0;
+
+// Input related variables :
+EADK::Keyboard::State state = 0;
+EADK::Keyboard::State lastState = 0;
+
 // Simple function that inits some vars
 // or resets them if that's what we're
 // trying to do :)
@@ -35,8 +46,9 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
+int renderScale = 2;
 #define pixelColor(i, x, y, sprtSheet, colorOverride) \
-    ((colorOverride) != -1 ? palette[colorOverride] : palette[(sprtSheet)[i][y][x]])
+    ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sprtSheet)[i][y][x]%16])
 // Renders a sprite from the given sprite sheet
 // at the given coordinates on the actual screen
 template <size_t sprites, size_t rows, size_t columns>
@@ -47,25 +59,25 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&s
 		sprt >= sprites || sprt < 0) { return; };
 
     // Setting the right values to flip or not the sprite
-    int iX, iY = 0;
+    int X = 0, Y = 0;
     int targetX = 8, targetY = 8;
     int xIncrement = 1, yIncrement = 1;
-    if (flipX) { iX = 8; targetX = 0; xIncrement = -1;}
-    if (flipY) { iY = 8; targetY = 0; yIncrement = -1;}
+    if (flipX) { X = 7; targetX = -1; xIncrement = -1;}
+    if (flipY) { Y = 7; targetY = -1; yIncrement = -1;}
 
     // Actually rendering the sprite
-    for (iY; iY < targetY; iY += yIncrement) {
+    for (int iY = Y; iY != targetY; iY += yIncrement) {
 		// Don't render pixels that are out of the emulated display
 		// area on the Y axis
 		if (y + iY < 0 || y + iY > pico8ScreenSize) { continue; }
 
-        for (iX; iX < targetX; iX += xIncrement) {
+        for (int iX = X; iX != targetX; iX += xIncrement) {
             // I consider black pixels as transparent same with pixels
             // that are out of the emulated display area on the X axis
-            if (mainSprtSheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
+            if (sheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
 
-            Display::pushRectUniform(Rect((pico8XOrgin + x + iX), (pico8YOrgin + y + iY), 1, 1),
-                                     pixelColor(sprt, iX, iY, sheet, colorOverride));
+            Display::pushRectUniform(Rect((pico8XOrgin + abs(x + X - iX)*renderScale), (pico8YOrgin + abs(y + Y - iY)*renderScale),
+									 renderScale, renderScale), pixelColor(sprt, iX, iY, sheet, colorOverride));
         }
     }
 }
@@ -74,13 +86,17 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&s
 void emuPrint(const char* str, int x, int y, int color) {
 	for (char c = *str; c; c = *(++str)) {
 		c &= 0x7F;
+		/*
 		SDL_Rect srcrc = {8*(c%16), 8*(c/16)};
 		srcrc.x *= scale;
 		srcrc.y *= scale;
 		srcrc.w = srcrc.h = 8*scale;
 		
 		SDL_Rect dstrc = {x*scale, y*scale, scale, scale};
-		Xblit(font, &srcrc, screen, &dstrc, col, 0,0);
+		Xblit(font, &srcrc, screen, &dstrc, color, 0,0);
+		*/
+
+		emuSprtRender(c, x, y, false, false, fontSprtSheet, color);
 		x += 4;
 	}
 }
@@ -349,6 +365,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 					int tile = tilemap_data[x + mx + (y + my)*128];
 					//hack
 					if (mask == 0 || (mask == 4 && tile_flags[tile] == 4) || getTileFlag(tile, mask != 4 ? mask-1 : mask)) {
+						/*
 						SDL_Rect srcrc = {
 							8*(tile % 16),
 							8*(tile / 16)
@@ -369,6 +386,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 						}
 
 						Xblit(gfx, &srcrc, screen, &dstrc, 0, 0, 0); // TODO : replace with direct render of the tile
+						*/
 					}
 				}
 			}
@@ -378,4 +396,14 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 	end:
 	va_end(args);
 	return ret;
+}
+
+void testFunction() {
+	emuSprtRender(3, 8, 16, false, false, mainSprtSheet, -1);
+	emuSprtRender(3, 16, 16, false, true, mainSprtSheet, -1);
+	emuSprtRender(3, 24, 16, true, false, mainSprtSheet, -1);
+	emuSprtRender(3, 32, 16, true, true, mainSprtSheet, -1);
+	emuPrint("!\"#$%&'()*,-./012345689", 0, 40, 12);
+	emuPrint(":;<=>?@ABCDEZ[\\]^_`abcdez", 0, 48, 12);
+	emuPrint("{|}~", 0, 56, 12);
 }
