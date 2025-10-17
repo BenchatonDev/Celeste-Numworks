@@ -14,11 +14,6 @@
 #define pico8XOrgin = 0
 #define pico8YOrgin = 0
 
-// We don't have enough vertical
-// screen space on the calc to actually
-// do any scalling but the option is there
-int renderScale = 1;
-
 int palette[16];
 bool screenShake = true;
 bool pauseEmu = false;
