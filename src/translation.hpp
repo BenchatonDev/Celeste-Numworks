@@ -7,6 +7,7 @@
 #include "game/tilemap.h"
 
 #include <stdarg.h>
+#include <math.h>
 #include <cstring>
 #include <assert.h>
 #include <memory>

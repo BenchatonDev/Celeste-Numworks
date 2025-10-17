@@ -7,7 +7,7 @@ using namespace EADK;
 // trying to do :)
 void emuInit() {
 
-    Celeste_P8_set_rndseed(random());
+    Celeste_P8_set_rndseed(EADK::random());
 
     memcpy(&palette, defltPalette, sizeof(defltPalette));
 
@@ -35,11 +35,12 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-#define pixelColor(i, x, y, sprtSheet) defltPalette[sprtSheet[i][y][x]]
+#define pixelColor(i, x, y, sprtSheet, colorOverride) \
+    ((colorOverride) != -1 ? palette[colorOverride] : palette[(sprtSheet)[i][y][x]])
 // Renders a sprite from the given sprite sheet
 // at the given coordinates on the actual screen
 template <size_t sprites, size_t rows, size_t columns>
-void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&sheet)[sprites][rows][columns]) {
+void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&sheet)[sprites][rows][columns], int colorOverride) {
     // Don't render empty sprites or sprites outside the sheet
     if (mainSprtSheet[sprt] == 0 || sprt > 128) { return; };
 
@@ -55,27 +56,72 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&s
 		// Don't render pixels that are out of the emulated display
 		// area on the Y axis
 		if (y + iY < 0 || y + iY > pico8ScreenSize) { continue; }
-		
+
         for (iX; iX < targetX; iX += xIncrement) {
             // I consider black pixels as transparent same with pixels
             // that are out of the emulated display area on the X axis
             if (mainSprtSheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
 
             Display::pushRectUniform(Rect((pico8XOrgin + x + iX), (pico8YOrgin + y + iY), 1, 1),
-                                     pixelColor(sprt, iX, iY, sheet));
+                                     pixelColor(sprt, iX, iY, sheet, colorOverride));
         }
     }
 }
 #undef pixelColor
 
-void emuPrint(const char* str, int x, int y, int color);
-
+void emuPrint(const char* str, int x, int y, int color) {
+	for (char c = *str; c; c = *(++str)) {
+		c &= 0x7F;
+		SDL_Rect srcrc = {8*(c%16), 8*(c/16)};
+		srcrc.x *= scale;
+		srcrc.y *= scale;
+		srcrc.w = srcrc.h = 8*scale;
+		
+		SDL_Rect dstrc = {x*scale, y*scale, scale, scale};
+		Xblit(font, &srcrc, screen, &dstrc, col, 0,0);
+		x += 4;
+	}
+}
 
 #define drawColor(color) palette[color%16]
-void emuRectFill(int x, int y, int width, int height, int color);
-void emuLine(int startX, int startY, int finishX, int finishY, unsigned char color);
+void emuRectFill(int x, int y, int width, int height, int color) {
+	Display::pushRectUniform(Rect((pico8XOrgin + x), (pico8YOrgin + y), width, height), drawColor(color));
+}
 
-// This one is pulled directly from Lemon's Code
+// A function directly pulled from Lemon's implementation
+void emuLine(int startX, int startY, int finishX, int finishY, unsigned char color) {
+  #define PLOT(x,y) do {                                                        \
+     Display::pushRectUniform(Rect(x, y, 1, 1), drawColor(color)); \
+	} while (0)
+	int sx, sy, dx, dy, err, e2;
+	dx = abs(finishX - startX);
+	dy = abs(finishY - startY);
+	if (!dx && !dy) return;
+
+	if (startX < finishX) sx = 1; else sx = -1;
+	if (startY < finishY) sy = 1; else sy = -1;
+	err = dx - dy;
+	if (!dy && !dx) return;
+	else if (!dx) { //vertical line
+		for (int y = startY; y != finishY; y += sy) PLOT(startX,y);
+	} else if (!dy) { //horizontal line
+		for (int x = startX; x != finishX; x += sx) PLOT(x,startY);
+	} while (startX != finishX || startY != finishY) {
+		PLOT(startX, startY);
+		e2 = 2 * err;
+		if (e2 > -dy) {
+			err -= dy;
+			startX += sx;
+		}
+		if (e2 < dx) {
+			err += dx;
+			startY += sy;
+		}
+	}
+	#undef PLOT
+}
+
+// Another function pulled directly from Lemon's Code
 static int getTileFlag(int tile, int flag) {
 	return tile < sizeof(tile_flags)/sizeof(*tile_flags) && (tile_flags[tile] & (1 << flag)) != 0;
 }
@@ -155,8 +201,8 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
                 */
 
                 // And this does the "rendering"
-				// Xblit(gfx, &srcrc, screen, &dstrc, 0,flipx,flipy); // TODO : replace with direct render of the sprite
-                emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet);
+				// Xblit(gfx, &srcrc, screen, &dstrc, 0,flipx,flipy);
+                emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
 			}
 		} break;
 
@@ -183,18 +229,32 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int cx = INT_ARG() - cameraX;
 			int cy = INT_ARG() - cameraY;
 			int r = INT_ARG();
-			int col = INT_ARG();
+			int color = INT_ARG();
 
-			if (r <= 1) { // TODO : Replace all SDL stuff
+			if (r <= 1) {
+				/*
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-1), renderScale*cy, renderScale*3, renderScale}, drawColor(col));
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*cx, renderScale*(cy-1), renderScale, renderScale*3}, drawColor(col));
+				*/
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1)), (pico8YOrgin + cy), 3, 1), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + cx), (pico8YOrgin + (cy - 1)), 1, 3), drawColor(color));
 			} else if (r <= 2) {
+				/*
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-2), renderScale*(cy-1), renderScale*5, renderScale*3}, drawColor(col));
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-1), renderScale*(cy-2), renderScale*3, renderScale*5}, drawColor(col));
+				*/
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 1)), 5, 3), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 2)), 3, 5), drawColor(color));
 			} else if (r <= 3) {
+				/*
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-3), renderScale*(cy-1), renderScale*7, renderScale*3}, drawColor(col));
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-1), renderScale*(cy-3), renderScale*3, renderScale*7}, drawColor(col));
 				SDL_FillRect(screen, &(SDL_Rect){renderScale*(cx-2), renderScale*(cy-2), renderScale*5, renderScale*5}, drawColor(col));
+				*/
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 3)), (pico8YOrgin + (cy - 1)), 7, 3), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 3)), 3, 7), drawColor(color));
+				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 2)), 5, 5), drawColor(color));
+
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
 				int ddFx = 1; //step x
@@ -204,8 +264,8 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 				//this algorithm doesn't account for the diameters
 				//so we have to set them manually
-				emuLine(cx,cy-y, cx,cy+r, col);
-				emuLine(cx+r,cy, cx-r,cy, col);
+				emuLine(cx,cy-y, cx,cy+r, color);
+				emuLine(cx+r,cy, cx-r,cy, color);
 
 				while (x < y) {
 					if (f >= 0) {
@@ -218,10 +278,10 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 					f += ddFx;
 
 					//build our current arc
-					emuLine(cx+x,cy+y, cx-x,cy+y, col);
-					emuLine(cx+x,cy-y, cx-x,cy-y, col);
-					emuLine(cx+y,cy+x, cx-y,cy+x, col);
-					emuLine(cx+y,cy-x, cx-y,cy-x, col);
+					emuLine(cx+x,cy+y, cx-x,cy+y, color);
+					emuLine(cx+x,cy-y, cx-x,cy-y, color);
+					emuLine(cx+y,cy+x, cx-y,cy+x, color);
+					emuLine(cx+y,cy-x, cx-y,cy-x, color);
 				}
 			}
 		} break;
