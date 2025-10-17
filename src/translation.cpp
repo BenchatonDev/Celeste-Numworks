@@ -60,24 +60,24 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&s
 
     // Setting the right values to flip or not the sprite
     int X = 0, Y = 0;
-    int targetX = 8, targetY = 8;
-    int xIncrement = 1, yIncrement = 1;
-    if (flipX) { X = 7; targetX = -1; xIncrement = -1;}
-    if (flipY) { Y = 7; targetY = -1; yIncrement = -1;}
+    int xCoefficient = 1, yCoefficient = 1;
+    if (flipX) { X = 7; xCoefficient = -1;}
+    if (flipY) { Y = 7; yCoefficient = -1;}
 
     // Actually rendering the sprite
-    for (int iY = Y; iY != targetY; iY += yIncrement) {
+    for (int iY = 0; iY != 8; iY++) {
 		// Don't render pixels that are out of the emulated display
 		// area on the Y axis
 		if (y + iY < 0 || y + iY > pico8ScreenSize) { continue; }
 
-        for (int iX = X; iX != targetX; iX += xIncrement) {
+        for (int iX = 0; iX != 8; iX++) {
             // I consider black pixels as transparent same with pixels
             // that are out of the emulated display area on the X axis
             if (sheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
 
-            Display::pushRectUniform(Rect((pico8XOrgin + abs(x + X - iX)*renderScale), (pico8YOrgin + abs(y + Y - iY)*renderScale),
-									 renderScale, renderScale), pixelColor(sprt, iX, iY, sheet, colorOverride));
+            Display::pushRectUniform(Rect((pico8XOrgin + (x + X + (iX * xCoefficient)) * renderScale),
+									(pico8YOrgin + (y + Y + (iY * yCoefficient)) * renderScale), renderScale,
+									renderScale), pixelColor(sprt, iX, iY, sheet, colorOverride));
         }
     }
 }
