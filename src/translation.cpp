@@ -35,9 +35,45 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-static void emuRectFill(int x, int y, int width, int height, int color);
-static void emuLine(int startX, int startY, int finishX, int finishY, unsigned char color);
-static void emuPrint(const char* str, int x, int y, int color);
+#define pixelColor(i, x, y, sprtSheet) defltPalette[sprtSheet[i][y][x]]
+// Renders a sprite from the given sprite sheet
+// at the given coordinates on the actual screen
+template <size_t sprites, size_t rows, size_t columns>
+void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&sheet)[sprites][rows][columns]) {
+    // Don't render empty sprites or sprites outside the sheet
+    if (mainSprtSheet[sprt] == 0 || sprt > 128) { return; };
+
+    // Setting the right values to flip or not the sprite
+    int iX, iY = 0;
+    int targetX = 8, targetY = 8;
+    int xIncrement = 1, yIncrement = 1;
+    if (flipX) { iX = 8; targetX = 0; xIncrement = -1;}
+    if (flipY) { iY = 8; targetY = 0; yIncrement = -1;}
+
+    // Actually rendering the sprite
+    for (iY; iY < targetY; iY += yIncrement) {
+		// Don't render pixels that are out of the emulated display
+		// area on the Y axis
+		if (y + iY < 0 || y + iY > pico8ScreenSize) { continue; }
+		
+        for (iX; iX < targetX; iX += xIncrement) {
+            // I consider black pixels as transparent same with pixels
+            // that are out of the emulated display area on the X axis
+            if (mainSprtSheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
+
+            Display::pushRectUniform(Rect((pico8XOrgin + x + iX), (pico8YOrgin + y + iY), 1, 1),
+                                     pixelColor(sprt, iX, iY, sheet));
+        }
+    }
+}
+#undef pixelColor
+
+void emuPrint(const char* str, int x, int y, int color);
+
+
+#define drawColor(color) palette[color%16]
+void emuRectFill(int x, int y, int width, int height, int color);
+void emuLine(int startX, int startY, int finishX, int finishY, unsigned char color);
 
 // This one is pulled directly from Lemon's Code
 static int getTileFlag(int tile, int flag) {
@@ -69,9 +105,9 @@ static void OSDdraw(void) {
 // It's basicly the pico8emu() function from Lemon's code
 // with the required adjustements and modifications
 int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
-    static int cameraX, cameraY = 0;
+    static int cameraX = 0, cameraY = 0;
 	if (!screenShake) {
-		cameraX, cameraY = 0;
+		cameraX = 0, cameraY = 0;
 	}
 
 	va_list args;
@@ -83,24 +119,24 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 	#define RET_INT(_i)   do {ret = (_i); goto end;} while (0)
 	#define RET_BOOL(_b) RET_INT(!!(_b))
 
-    #define drawColor(col)(x) palette[x%16]
-
 	switch (call) {
 		case CELESTE_P8_SPR: { //spr(sprite,x,y,cols,rows,flipx,flipy)
-			int sprite = INT_ARG();
+			int sprt = INT_ARG();
 			int x = INT_ARG();
 			int y = INT_ARG();
 			int cols = INT_ARG();
 			int rows = INT_ARG();
-			int flipx = BOOL_ARG();
-			int flipy = BOOL_ARG();
+			int flipX = BOOL_ARG();
+			int flipY = BOOL_ARG();
 
 			(void)cols;
 			(void)rows;
 
 			assert(rows == 1 && cols == 1);
 
-			if (sprite >= 0) {
+			if (sprt >= 0) {
+                // My guess is that this is where to pull the sprite in the sheet
+                /*
 				SDL_Rect srcrc = {
 					8*(sprite % 16),
 					8*(sprite / 16)
@@ -108,18 +144,28 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 				srcrc.x *= renderScale;
 				srcrc.y *= renderScale;
 				srcrc.w = srcrc.h = renderScale*8;
+                */
+                
+                // And this is where to place it on the Emulated screen
+                /*
 				SDL_Rect dstrc = {
 					(x - cameraX)*renderScale, (y - cameraY)*renderScale,
 					renderScale, renderScale
 				};
-				Xblit(gfx, &srcrc, screen, &dstrc, 0,flipx,flipy); // TODO : replace with direct render of the sprite
+                */
+
+                // And this does the "rendering"
+				// Xblit(gfx, &srcrc, screen, &dstrc, 0,flipx,flipy); // TODO : replace with direct render of the sprite
+                emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet);
 			}
 		} break;
+
 		case CELESTE_P8_BTN: { //btn(b)
 			int b = INT_ARG();
 			assert(b >= 0 && b <= 5); 
 			RET_BOOL(emuBtnState & (1 << b));
 		} break;
+
 		case CELESTE_P8_PAL: { //pal(a,b)
 			int a = INT_ARG();
 			int b = INT_ARG();
@@ -128,9 +174,11 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 				palette[a] = defltPalette[b];
 			}
 		} break;
+
 		case CELESTE_P8_PAL_RESET: { //pal()
 			memcpy(&palette, defltPalette, sizeof(defltPalette));
 		} break;
+
 		case CELESTE_P8_CIRCFILL: { //circfill(x,y,r,col)
 			int cx = INT_ARG() - cameraX;
 			int cy = INT_ARG() - cameraY;
@@ -177,6 +225,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 				}
 			}
 		} break;
+
 		case CELESTE_P8_PRINT: { //print(str,x,y,col)
 			const char* str = va_arg(args, const char*);
 			int x = INT_ARG() - cameraX;
@@ -185,6 +234,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			emuPrint(str,x,y,col);
 		} break;
+
 		case CELESTE_P8_RECTFILL: { //rectfill(x0,y0,x1,y1,col)
 			int x0 = INT_ARG() - cameraX;
 			int y0 = INT_ARG() - cameraY;
@@ -194,6 +244,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			emuRectFill(x0,y0,x1,y1,col);
 		} break;
+
 		case CELESTE_P8_LINE: { //line(x0,y0,x1,y1,col)
 			int x0 = INT_ARG() - cameraX;
 			int y0 = INT_ARG() - cameraY;
@@ -203,24 +254,28 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			emuLine(x0,y0,x1,y1,col);
 		} break;
+
 		case CELESTE_P8_MGET: { //mget(tx,ty)
 			int tx = INT_ARG();
 			int ty = INT_ARG();
 
 			RET_INT(tilemap_data[tx+ty*128]);
 		} break;
+
 		case CELESTE_P8_CAMERA: { //camera(x,y)
 			if (screenShake) {
 				cameraX = INT_ARG();
 				cameraY = INT_ARG();
 			}
 		} break;
+
 		case CELESTE_P8_FGET: { //fget(tile,flag)
 			int tile = INT_ARG();
 			int flag = INT_ARG();
 
 			RET_INT(getTileFlag(tile, flag));
 		} break;
+
 		case CELESTE_P8_MAP: { //map(mx,my,tx,ty,mw,mh,mask)
 			int mx = INT_ARG(), my = INT_ARG();
 			int tx = INT_ARG(), ty = INT_ARG();

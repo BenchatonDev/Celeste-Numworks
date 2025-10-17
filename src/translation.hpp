@@ -13,6 +13,7 @@
 
 #define pico8XOrgin 0
 #define pico8YOrgin 0
+#define pico8ScreenSize 128
 
 int palette[16];
 bool screenShake = true;
