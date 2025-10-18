@@ -17,8 +17,8 @@ src = $(addprefix src/,\
   eadk/eadk_vars.cpp \
 )
 
-CPPFLAGS = -std=c++11 -fno-exceptions -mfloat-abi=hard -mcpu=cortex-m7 -DCELESTE_P8_FIXEDP
-CPPFLAGS += -Os -Wall
+CPPFLAGS = -std=c++11 -fno-exceptions -mfloat-abi=hard -mcpu=cortex-m7
+CPPFLAGS += -Os -Wall -DCELESTE_P8_FIXEDP -fpermissive
 CPPFLAGS += $(shell $(NWLINK) eadk-cflags)
 CPPFLAGS += -D__RODATA_EADK_API_LEVEL__=\"1.0\" -D__RODATA_EADK_APP_NAME__=\"Celeste\"
 LDFLAGS = -Wl,--relocatable

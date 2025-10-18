@@ -36,6 +36,7 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
+// TODO : Make the no render ouside of emulated screen 100% of the time :/
 #define pixelColor(i, x, y, sprtSheet, colorOverride) \
     ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sprtSheet)[i][y][x]%16])
 // Renders a sprite from the given sprite sheet
@@ -123,7 +124,6 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 	if ((eX > sX) && (eY > sY)) {
 		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
 	}
-	//Display::pushRectUniform(Rect((pico8XOrgin + x * renderScale), (pico8YOrgin + y * renderScale), width * renderScale, height * renderScale), drawColor(color));
 }
 
 // A function directly pulled from Lemon's implementation
@@ -216,7 +216,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			(void)cols;
 			(void)rows;
 
-			assert(rows == 1 && cols == 1);
+			if (!(rows == 1 && cols == 1)) { break; };
 
         	emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
 		} break;
@@ -247,24 +247,17 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				emuRectFill((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + cy * renderScale),
-							 3 * renderScale, 1 * renderScale, drawColor(color));
-				emuRectFill((pico8XOrgin + cx * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
-							 1 * renderScale, 3 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 1)), (pico8YOrgin + cy), 3, 1, drawColor(color));
+				emuRectFill((pico8XOrgin + cx), (pico8YOrgin + (cy - 1)), 1, 3, drawColor(color));
 
 			} else if (r <= 2) {
-				emuRectFill((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
-							 5 * renderScale, 3 * renderScale, drawColor(color));
-				emuRectFill((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
-							 3 * renderScale, 5 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 1)), 5, 3, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 2)), 3, 5, drawColor(color));
 
 			} else if (r <= 3) {
-				emuRectFill((pico8XOrgin + (cx - 3) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
-							 7 * renderScale, 3 * renderScale, drawColor(color));
-				emuRectFill((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 3) * renderScale),
-							 3 * renderScale, 7 * renderScale, drawColor(color));
-				emuRectFill((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
-							 5 * renderScale, 5 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 3)), (pico8YOrgin + (cy - 1)), 7, 3, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 3)), 3, 7, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 2)), 5, 5, drawColor(color));
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
