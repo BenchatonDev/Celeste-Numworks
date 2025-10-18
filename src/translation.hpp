@@ -11,7 +11,7 @@
 #include <cstring>
 #include <memory>
 
-#define pico8XOrgin 0
+#define pico8XOrgin 32
 #define pico8YOrgin 0
 #define pico8ScreenSize 128
 

@@ -39,7 +39,10 @@ int main(void) {
 
         // Weird flickering here on right edges
         emulator(CELESTE_P8_MAP, 0 * 16, 0 * 16, 0, 0, 16, 16, 4);
+        // the value of int off need to be 0 to not have flickering
         emulator(CELESTE_P8_MAP, 0 * 16, 0 * 16, 0, 0, 16, 16, 2);
+
+        emulator(CELESTE_P8_MAP, 0 * 16,0 * 16, 0, 0, 16, 16, 8);
 
         // Maybe flickering is because we're rendering to fast ?
         //Timing::msleep(1000/30);
