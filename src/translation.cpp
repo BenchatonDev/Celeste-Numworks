@@ -119,7 +119,7 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 	CLAMP(sX, 0, screenResW); CLAMP(sY, 0, screenResH);
 	CLAMP(eX, 0, screenResW); CLAMP(eY, 0, screenResH);
 	#undef CLAMP
-	
+
 	if ((eX > sX) && (eY > sY)) {
 		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
 	}
@@ -247,24 +247,24 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + cy * renderScale),
-										 3 * renderScale, 1 * renderScale), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + cx * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
-										 1 * renderScale, 3 * renderScale), drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + cy * renderScale),
+							 3 * renderScale, 1 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + cx * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
+							 1 * renderScale, 3 * renderScale, drawColor(color));
 
 			} else if (r <= 2) {
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
-										 5 * renderScale, 3 * renderScale), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
-										 3 * renderScale, 5 * renderScale), drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
+							 5 * renderScale, 3 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
+							 3 * renderScale, 5 * renderScale, drawColor(color));
 
 			} else if (r <= 3) {
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 3) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
-										 7 * renderScale, 3 * renderScale), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 3) * renderScale),
-										 3 * renderScale, 7 * renderScale), drawColor(color));
-				Display::pushRectUniform(Rect((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
-										 5 * renderScale, 5 * renderScale), drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 3) * renderScale), (pico8YOrgin + (cy - 1) * renderScale),
+							 7 * renderScale, 3 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 1) * renderScale), (pico8YOrgin + (cy - 3) * renderScale),
+							 3 * renderScale, 7 * renderScale, drawColor(color));
+				emuRectFill((pico8XOrgin + (cx - 2) * renderScale), (pico8YOrgin + (cy - 2) * renderScale),
+							 5 * renderScale, 5 * renderScale, drawColor(color));
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
@@ -419,8 +419,7 @@ void emuInit() {
 	gameState = malloc(Celeste_P8_get_state_size());
 	if (gameState) { Celeste_P8_save_state(gameState); }
 
-	//Celeste_P8_set_rndseed(EADK::random());
-	Celeste_P8_set_rndseed(1);
+	Celeste_P8_set_rndseed(EADK::random());
 
 	Celeste_P8_init();
 
