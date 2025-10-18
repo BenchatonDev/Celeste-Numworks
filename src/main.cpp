@@ -38,8 +38,12 @@ int main(void) {
         //emulator(CELESTE_P8_PRINT, "This works nicely !", 40, 40, 7);
 
         // Weird flickering here on right edges
-        emulator(CELESTE_P8_MAP, 0 * 16, 0 * 16, 0, 0, 16, 16, 4);
+        //emulator(CELESTE_P8_MAP, 0 * 16, 0 * 16, 0, 0, 16, 16, 4);
         emulator(CELESTE_P8_MAP, 0 * 16, 0 * 16, 1, 0, 16, 16, 2);
+
+        // Maybe flickering is because we're rendering to fast ?
+        //Timing::msleep(1000/30);
+        // Nope not the actuall problem
     }
 
     free(gameState);
