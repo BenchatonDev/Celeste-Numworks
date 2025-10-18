@@ -68,7 +68,7 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const int (&s
 			int pX = (pico8XOrgin + (x + X + iX * xCoefficient) * renderScale);
 			int pY = (pico8YOrgin + (y + Y + iY * yCoefficient) * renderScale);
 
-			if (pX < 0 || pY < 0 || pX > Screen::Width || pY > Screen::Height) { continue; }
+			if (pX < 0 || pY < 0 || pX > screenResW || pY > screenResH) { continue; }
             Display::pushRectUniform(Rect(pX, pY, renderScale, renderScale),
 									pixelColor(sprt, iX, iY, sheet, colorOverride));
         }
@@ -92,13 +92,44 @@ void emuPrint(const char* str, int x, int y, int color) {
 
 #define drawColor(color) palette[color%16]
 void emuRectFill(int x, int y, int width, int height, int color) {
-	Display::pushRectUniform(Rect((pico8XOrgin + x), (pico8YOrgin + y), width, height), drawColor(color));
+
+	int sX = x, sY = y;
+	int eX = (sX + width), eY = (sY + height);
+
+	// Firts we check to see if the whole thing even is in the
+	// Emulated screen, if not why bother ?
+	if (eX <= 0 || eY <= 0 || sX >= pico8ScreenSize || sY >= pico8ScreenSize)
+	{ return; }
+	
+	// Then we make sure the rect we try to render is cut to fit
+	// inside the emulated screen using Lemon's CLAMP macro
+	#define CLAMP(v,min,max) v = v < min ? min : v >= max ? max : v
+	CLAMP(sX, 0, pico8ScreenSize); CLAMP(sY, 0, pico8ScreenSize);
+	CLAMP(eX, 0, pico8ScreenSize); CLAMP(eY, 0, pico8ScreenSize);
+	
+	// Now that we know it's fully and only on the emulated Screen
+	// we want to know if it's drawable on the physical screen
+	sX = pico8XOrgin + (sX * renderScale), sY = pico8YOrgin + (sY * renderScale);
+	eX = pico8XOrgin + (eX * renderScale), eY = pico8YOrgin + (eY * renderScale);
+	if (eX <= 0 || eY <= 0 || sX >= screenResW || sY >= screenResH)
+	{ return; }
+
+	// And then we clamp again but this time to fit the actual screen
+	// So if we have a renderScale > 1 we don't have drawing artefacts
+	CLAMP(sX, 0, screenResW); CLAMP(sY, 0, screenResH);
+	CLAMP(eX, 0, screenResW); CLAMP(eY, 0, screenResH);
+	#undef CLAMP
+	
+	if ((eX > sX) && (eY > sY)) {
+		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
+	}
+	//Display::pushRectUniform(Rect((pico8XOrgin + x * renderScale), (pico8YOrgin + y * renderScale), width * renderScale, height * renderScale), drawColor(color));
 }
 
 // A function directly pulled from Lemon's implementation
-void emuLine(int startX, int startY, int finishX, int finishY, unsigned char color) {
+void emuLine(int startX, int startY, int finishX, int finishY, int color) {
   #define PLOT(x,y) do {                                                        \
-     Display::pushRectUniform(Rect(x, y, 1, 1), drawColor(color)); \
+	 emuRectFill(x, y, 1, 1, color); \
 	} while (0)
 	int sx, sy, dx, dy, err, e2;
 	dx = abs(finishX - startX);

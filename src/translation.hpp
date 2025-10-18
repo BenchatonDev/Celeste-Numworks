@@ -11,6 +11,9 @@
 #include <cstring>
 #include <memory>
 
+#define screenResW Screen::Width
+#define screenResH Screen::Height
+
 #define pico8XOrgin 32
 #define pico8YOrgin 0
 #define pico8ScreenSize 128

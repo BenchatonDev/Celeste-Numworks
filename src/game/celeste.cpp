@@ -359,7 +359,7 @@ static void PRELUDE() {
 
 void Celeste_P8_init() { //identifiers beginning with underscores are reserved in C
 	if (!Celeste_P8_call) {
-		fprintf(stderr, "Warning: Celeste_P8_call is NULL.. have you called Celeste_P8_set_call_func()?\n");
+		//fprintf(stderr, "Warning: Celeste_P8_call is NULL.. have you called Celeste_P8_set_call_func()?\n");
 	}
 
 	PRELUDE();
@@ -1478,13 +1478,13 @@ static void FLAG_draw(OBJ* this) {
 		P8spr(26,55,6, 1,1,false,false);
 		{
 			char str[16];
-			snprintf(str, sizeof(str), "x%i", this->score);
+			//snprintf(str, sizeof(str), "x%i", this->score);
 			P8print(str,64,9,7);
 		}
 		draw_time(49,16);
 		{
 			char str[16];
-			snprintf(str, sizeof(str), "deaths:%i", deaths);
+			//snprintf(str, sizeof(str), "deaths:%i", deaths);
 			P8print(str,48,24,7);
 		}
 	} else if (OBJ_check(this, OBJ_PLAYER,0,0)) {
@@ -1514,7 +1514,7 @@ static void ROOM_TITLE_draw(OBJ* this) {
 			int level=(1+level_index())*100;
 			{
 				char str[16];
-				snprintf(str, sizeof(str), "%i m", level);
+				//snprintf(str, sizeof(str), "%i m", level);
 				P8print(str,52+(level<1000 ? 2 : 0),62,7);
 			}
 		}
@@ -1923,7 +1923,7 @@ static void draw_time(float x, float y) {
 	P8rectfill(x,y,x+32,y+6,0);
 	{
 		char str[27];
-		snprintf(str, sizeof(str), "%.2i:%.2i:%.2i", h, m, s);
+		//snprintf(str, sizeof(str), "%.2i:%.2i:%.2i", h, m, s);
 		P8print(str,x+1,y+1,7);
 	}
 }
