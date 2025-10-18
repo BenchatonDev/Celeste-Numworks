@@ -15,7 +15,7 @@
 #define screenResH Screen::Height
 
 #define pico8XOrgin 32
-#define pico8YOrgin 0
+#define pico8YOrgin -8
 #define pico8ScreenSize 128
 
 extern int palette[16];
@@ -34,9 +34,6 @@ extern uint16_t lastEmuBtnState;
 // Input related variables :
 extern EADK::Keyboard::State state;
 extern EADK::Keyboard::State lastState;
-
-// Testing calls individually
-int emulator(CELESTE_P8_CALLBACK_TYPE call, ...);
 
 // Public functions
 void emuInit();
