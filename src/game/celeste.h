@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+#define assert(condition) do { if (!(condition)) { while(true) {} }; } while (false)
+
 typedef enum {
 	CELESTE_P8_MUSIC, CELESTE_P8_SPR, CELESTE_P8_BTN, CELESTE_P8_SFX,
 	CELESTE_P8_PAL, CELESTE_P8_PAL_RESET, CELESTE_P8_CIRCFILL, CELESTE_P8_PRINT,

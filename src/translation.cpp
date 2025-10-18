@@ -7,23 +7,13 @@ int palette[16];
 bool screenShake = true;
 bool pauseEmu = false;
 void *gameState = NULL;
-int emuBtnState = 0;
+uint16_t emuBtnState = 0;
+uint16_t lastEmuBtnState = 0;
+int renderScale = 1;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
 EADK::Keyboard::State lastState = 0;
-
-// Simple function that inits some vars
-// or resets them if that's what we're
-// trying to do :)
-void emuInit() {
-
-    Celeste_P8_set_rndseed(EADK::random());
-
-    memcpy(&palette, defltPalette, sizeof(defltPalette));
-
-    return;
-}
 
 // That's where we're handling the actual inputs
 // for the game and OSD (It's here to !)
@@ -46,7 +36,6 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-int renderScale = 2;
 #define pixelColor(i, x, y, sprtSheet, colorOverride) \
     ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sprtSheet)[i][y][x]%16])
 // Renders a sprite from the given sprite sheet
@@ -194,7 +183,9 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			assert(rows == 1 && cols == 1);
 
-        	emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
+			if (sprt >= 0) {
+        		emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
+			}
 		} break;
 
 		case CELESTE_P8_BTN: { //btn(b)
@@ -364,12 +355,14 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 						*/
 						
 						// Maybe it should be implemented like this ?
+
 						if (0) {
 							emuSprtRender(tile, (x * 8 - cameraX), (y * 8 - cameraY), false, false, mainSprtSheet, -1);
 							continue;
 						}
 
 						emuSprtRender(tile, (tx + x * 8 - cameraX), (ty + y * 8 - cameraY), false, false, mainSprtSheet, -1);
+						
 					}
 				}
 			}
@@ -381,12 +374,52 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 	return ret;
 }
 
-void testFunction() {
-	emuSprtRender(3, 8, 16, false, false, mainSprtSheet, -1);
-	emuSprtRender(3, 16, 16, false, true, mainSprtSheet, -1);
-	emuSprtRender(3, 24, 16, true, false, mainSprtSheet, -1);
-	emuSprtRender(3, 32, 16, true, true, mainSprtSheet, -1);
-	emuPrint("!\"#$%&'()*,-./012345689", 0, 40, 12);
-	emuPrint(":;<=>?@ABCDEZ[\\]^_`abcdez", 0, 48, 12);
-	emuPrint("{|}~", 0, 56, 12);
+// Simple function that inits some vars
+// or resets them if that's what we're
+// trying to do :)
+void emuInit() {
+
+	Celeste_P8_set_call_func(emulator);
+
+    memcpy(&palette, defltPalette, sizeof(defltPalette));
+
+	unsigned char memoryblock[1024 * 32] = {0};
+	
+	/*
+	gameState = malloc(Celeste_P8_get_state_size());
+	if (gameState) { Celeste_P8_save_state(gameState); 
+		//Celeste_P8_set_rndseed(EADK::random());
+		Celeste_P8_set_rndseed(1);
+
+		Celeste_P8_init();
+	} else free(gameState);
+	*/
+
+	if (gameState) { Celeste_P8_save_state(gameState);
+		Celeste_P8_set_rndseed(1);
+
+		Celeste_P8_init();
+	}
+
+    return;
+}
+
+void gameMain() {
+	lastEmuBtnState = emuBtnState;
+	emuBtnState = 0;
+
+	emuInput();
+
+	if (pauseEmu) {
+		const int x = pico8ScreenSize / 2 - 3 * 4, y = 8;
+
+		emuRectFill(x - 1, y - 1, 6 * 4 + x + 1, 6 + y + 1, 6);
+		emuRectFill(x, y, 6 * 4 + x, 6 + y, 0);
+		emuPrint("paused", x + 1, y + 1, 7);
+	} else {
+
+		Celeste_P8_update();
+		Celeste_P8_draw();
+	}
+	OSDdraw();
 }

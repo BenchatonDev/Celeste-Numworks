@@ -9,7 +9,6 @@
 #include <stdarg.h>
 #include <math.h>
 #include <cstring>
-#include <assert.h>
 #include <memory>
 
 #define pico8XOrgin 0
@@ -26,7 +25,8 @@ extern void *gameState;
 // input because I don't know how
 // else I would :/ and it's the
 // safest way to go
-extern int emuBtnState;
+extern uint16_t emuBtnState;
+extern uint16_t lastEmuBtnState;
 
 // Input related variables :
 extern EADK::Keyboard::State state;
@@ -36,5 +36,3 @@ extern EADK::Keyboard::State lastState;
 void emuInit();
 
 void gameMain();
-
-void testFunction();
