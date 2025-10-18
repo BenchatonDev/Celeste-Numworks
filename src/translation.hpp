@@ -32,6 +32,9 @@ extern uint16_t lastEmuBtnState;
 extern EADK::Keyboard::State state;
 extern EADK::Keyboard::State lastState;
 
+// Testing calls individually
+int emulator(CELESTE_P8_CALLBACK_TYPE call, ...);
+
 // Public functions
 void emuInit();
 

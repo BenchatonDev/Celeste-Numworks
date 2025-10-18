@@ -9,7 +9,7 @@ bool pauseEmu = false;
 void *gameState = NULL;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
-int renderScale = 1;
+int renderScale = 2;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -381,23 +381,13 @@ void emuInit() {
 
     memcpy(&palette, defltPalette, sizeof(defltPalette));
 
-	unsigned char memoryblock[1024 * 32] = {0};
-
-	/*
 	gameState = malloc(Celeste_P8_get_state_size());
-	if (gameState) { Celeste_P8_save_state(gameState); 
-		//Celeste_P8_set_rndseed(EADK::random());
-		Celeste_P8_set_rndseed(1);
+	if (gameState) { Celeste_P8_save_state(gameState); }
 
-		Celeste_P8_init();
-	} else free(gameState);
-	*/
+	//Celeste_P8_set_rndseed(EADK::random());
+	Celeste_P8_set_rndseed(1);
 
-	if (gameState) { Celeste_P8_save_state(gameState);
-		Celeste_P8_set_rndseed(1);
-
-		Celeste_P8_init();
-	}
+	Celeste_P8_init();
 
     return;
 }
