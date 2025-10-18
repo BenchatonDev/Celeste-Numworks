@@ -1848,7 +1848,7 @@ void Celeste_P8_draw() {
    
 	// draw fg terrain
 	P8map(room.x * 16,room.y * 16,0,0,16,16,8);
-   
+
 	// particles
 	for (int i = 0; i <= 24; i++) {
 		PARTICLE* p = &particles[i];
@@ -1885,7 +1885,7 @@ void Celeste_P8_draw() {
    
 	// credits
 	if (is_title()) {
-		P8print("OK+BACK",58,80,5);
+		P8print("OK+BACK",50,80,5);
 		P8print("matt thorson",42,96,5);
 		P8print("noel berry",46,102,5);
 	}
