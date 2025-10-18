@@ -183,9 +183,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			assert(rows == 1 && cols == 1);
 
-			if (sprt >= 0) {
-        		emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
-			}
+        	emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
 		} break;
 
 		case CELESTE_P8_BTN: { //btn(b)
@@ -384,7 +382,7 @@ void emuInit() {
     memcpy(&palette, defltPalette, sizeof(defltPalette));
 
 	unsigned char memoryblock[1024 * 32] = {0};
-	
+
 	/*
 	gameState = malloc(Celeste_P8_get_state_size());
 	if (gameState) { Celeste_P8_save_state(gameState); 

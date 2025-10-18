@@ -10,8 +10,6 @@
 using namespace EADK;
 using namespace std; 
 
-// Will be used later for a nice exit but we're testing
-// So who cares ?
 bool running = true;
 
 int main(void) {
@@ -19,9 +17,14 @@ int main(void) {
     Display::pushRectUniform(Screen::Rect, 0x000000);
     emuInit();
 
-    while (true) { // You can always exit by double pressing home so \(°-°)/
-        testFunction();
+    while (running) { // You can always exit by double pressing home so \(°-°)/
+        if (state.keyDown(Keyboard::Key::Home)) { running = false; }
+        gameMain();
+        
+        Timing::msleep(5000);
     }
+
+    //free(gameState);
 
     return 0;
 }
