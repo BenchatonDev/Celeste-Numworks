@@ -6,7 +6,7 @@
     <img src="https://img.shields.io/github/downloads/BenchatonDev/Celeste-Numworks/latest/total"/>
 </h1>
 
-A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is OK but (probably around the expected 30fps of a PICO-8 game) but the way I chose to directectly render to the screen makes it flicker really fast, if you are light sensitive DO NOT USE IT, which is why I don't provide a build.
+A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is OK (probably around the expected 30fps of a PICO-8 game) but the way I chose to directectly render to the screen makes it flicker really fast, if you are light sensitive DO NOT USE IT, which is why I don't provide a build.
 
 # Todo :
 - Switch direct rendering to a frameBuffer (write Pico8 Screen data to an array/buffer then present it to the screen all at once) to fix flickering
