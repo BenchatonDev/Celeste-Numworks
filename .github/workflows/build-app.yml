@@ -8,8 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    
     # From the github action marketp place by RangHo
     - name: Setup the Arch Linux environment
       uses: RangHo/setup-arch@v1.2.2
