@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+// It's only used in void functions so we can just return nothing
 #define assert(condition) if (!(condition)) { return; }
 
 typedef enum {
