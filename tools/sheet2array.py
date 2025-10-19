@@ -143,7 +143,7 @@ with open("textures.h", "w") as output:
             if i in [3, 7, 11]: tmpString += "\n     "
         else:
             tmpString += palette[i]
-    output.write("const int defltPalette[16] = \n    {" + tmpString + "};\n\n")
+    output.write("const uint8_t defltPalette[16] = \n    {" + tmpString + "};\n\n")
     
     # More ugly shenanigans but for the main sprite sheet
     # with all the required pretty stuff in the formating
@@ -152,11 +152,11 @@ with open("textures.h", "w") as output:
     
     tmpSprData = processSprtSheet(mainSprtSheet, 128, 64)
     tmpString = prettyDataFormat(tmpSprData)
-    output.write(f"const int mainSprtSheet[(128 / {spriteSize}) * (64 / {spriteSize})][{spriteSize}][{spriteSize}] = \n" + "    {" + tmpString + "};\n\n")
+    output.write(f"const uint8_t mainSprtSheet[(128 / {spriteSize}) * (64 / {spriteSize})][{spriteSize}][{spriteSize}] = \n" + "    {" + tmpString + "};\n\n")
     
     # More or less the same as for the main sheet what can I say
     output.write(f"// Sprite sheet ({fontSprtSheet.removeprefix(checkDirectory)}) array\n")
     
     tmpSprData = processSprtSheet(fontSprtSheet, 128, 80)
     tmpString = prettyDataFormat(tmpSprData)
-    output.write(f"const int fontSprtSheet[(128 / {spriteSize}) * (80 / {spriteSize})][{spriteSize}][{spriteSize}] = \n" + "    {" + tmpString + "};")
+    output.write(f"const uint8_t fontSprtSheet[(128 / {spriteSize}) * (80 / {spriteSize})][{spriteSize}][{spriteSize}] = \n" + "    {" + tmpString + "};")
