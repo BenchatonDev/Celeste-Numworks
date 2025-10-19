@@ -216,14 +216,15 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			(void)cols;
 			(void)rows;
 
-			if (!(rows == 1 && cols == 1)) { break; };
+			if (!(rows == 1 && cols == 1)) { return 0; };
 
         	emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
 		} break;
 
 		case CELESTE_P8_BTN: { //btn(b)
 			int b = INT_ARG();
-			assert(b >= 0 && b <= 5); 
+
+			if (!(b >= 0 && b <= 5)) { return 0; };
 			RET_BOOL(emuBtnState & (1 << b));
 		} break;
 
