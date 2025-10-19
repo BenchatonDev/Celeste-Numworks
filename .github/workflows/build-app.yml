@@ -32,4 +32,4 @@ jobs:
       uses: actions/upload-artifact@v4.6.2
       with:
         name: app-build
-        path: /home/runner/work/Celeste-Numworks/target/Celeste.nwa
+        path: $PWD/target/Celeste.nwa
