@@ -1,7 +1,7 @@
 #pragma once
 
 // Default color palette for all sprites
-const uint16_t defltPalette[16] = 
+const int defltPalette[16] = 
     {0x000000, 0x1d2b53, 0x7e2553, 0x008751, 
      0xab5236, 0x5f574f, 0xc2c3c7, 0xfff1e8, 
      0xff004d, 0xffa300, 0xffec27, 0x00e436, 

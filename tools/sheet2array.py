@@ -143,7 +143,7 @@ with open("textures.h", "w") as output:
             if i in [3, 7, 11]: tmpString += "\n     "
         else:
             tmpString += palette[i]
-    output.write("const uint8_t defltPalette[16] = \n    {" + tmpString + "};\n\n")
+    output.write("const int defltPalette[16] = \n    {" + tmpString + "};\n\n")
     
     # More ugly shenanigans but for the main sprite sheet
     # with all the required pretty stuff in the formating
