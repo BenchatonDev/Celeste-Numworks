@@ -1848,7 +1848,7 @@ void Celeste_P8_draw() {
    
 	// draw fg terrain
 	P8map(room.x * 16,room.y * 16,0,0,16,16,8);
-
+	
 	// particles
 	for (int i = 0; i <= 24; i++) {
 		PARTICLE* p = &particles[i];
