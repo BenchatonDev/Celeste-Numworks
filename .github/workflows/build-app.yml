@@ -26,6 +26,7 @@ jobs:
         . /usr/share/nvm/init-nvm.sh
         nvm use 16
         make
+        echo $PWD
       shell: arch.sh {0}
 
     - name: Archive the artifact
