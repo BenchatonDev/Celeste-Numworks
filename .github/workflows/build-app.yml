@@ -1,0 +1,28 @@
+name: Build app
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # From the github action marketp place by RangHo
+    - name: Setup Arch Linux environment
+      uses: RangHo/setup-arch@v1.2.2
+      with:
+        packages: base-devel arm-none-eabi-gcc arm-none-eabi-newlib nvm nodejs npm
+          
+    - uses: actions/checkout@v4
+    - name: Setup NodeJs with NVM
+      run: |
+        . /usr/share/nvm/init-nvm.sh
+        nvm install 16
+        nvm use 16
+      shell: arch.sh {0}
+      
+    - name: Build App
+      run: |
+        make
+      shell: arch.sh {0}
