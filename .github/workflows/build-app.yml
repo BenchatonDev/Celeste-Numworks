@@ -8,8 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v2
+    
     # From the github action marketp place by RangHo
-    - name: Setup Arch Linux environment
+    - name: Setup the Arch Linux environment
       uses: RangHo/setup-arch@v1.2.2
       with:
         packages: base-devel arm-none-eabi-gcc arm-none-eabi-newlib nvm nodejs npm
@@ -21,9 +23,15 @@ jobs:
         nvm install 16
       shell: arch.sh {0}
       
-    - name: Build App
+    - name: Build
       run: |
         . /usr/share/nvm/init-nvm.sh
         nvm use 16
         make
       shell: arch.sh {0}
+
+    - name: Archive the artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-build
+        path: /home/runner/work/Celeste-Numworks/target/Celeste.nwa
