@@ -3,7 +3,7 @@
 using namespace EADK;
 
 // Emulator related variables
-int basePalette[16];
+int palette[16];
 bool screenShake = true;
 bool pauseEmu = false;
 void *gameState = NULL;
