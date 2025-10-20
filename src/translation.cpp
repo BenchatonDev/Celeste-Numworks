@@ -93,7 +93,7 @@ void emuPrint(const char* str, int x, int y, int color) {
 
 #define drawColor(color) palette[color%16]
 void emuRectFill(int x, int y, int width, int height, int color) {
-
+	/* Quick way to disable the function
 	int sX = x, sY = y;
 	int eX = (sX + width), eY = (sY + height);
 
@@ -123,7 +123,7 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 
 	if ((eX > sX) && (eY > sY)) {
 		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
-	}
+	} */
 }
 
 // A function directly pulled from Lemon's implementation
