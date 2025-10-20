@@ -2,14 +2,24 @@
 
 using namespace EADK;
 
+// Rendering variables
+uint8_t basePalette[16] = {0,  1,  2,  3,
+				   	   4,  5,  6,  7,
+					   8,  9,  10, 11,
+					   12, 13, 14, 15};
+uint8_t palette[16] = {0};
+uint8_t frameBuffer[pico8Size][pico8Size] = {0};
+uint8_t bufferSprite[sprtSize][sprtSize] = {0};
+
 // Emulator related variables
-int palette[16];
 bool screenShake = true;
 bool pauseEmu = false;
 void *gameState = NULL;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
-int renderScale = 2;
+uint8_t renderScale = 2;
+uint8_t pico8XOrgin = 32;
+uint8_t pico8YOrgin = -8;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -36,7 +46,7 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-// TODO : Make the no render ouside of emulated screen 100% of the time :/
+/*
 #define pixelColor(i, x, y, sprtSheet, colorOverride) \
     ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sprtSheet)[i][y][x]%16])
 // Renders a sprite from the given sprite sheet
@@ -58,24 +68,35 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
     for (int iY = 0; iY != 8; iY++) {
 		// Don't render pixels that are out of the emulated display
 		// area on the Y axis
-		if (y + iY < 0 || y + iY > pico8ScreenSize) { continue; }
+		if (y + iY < 0 || y + iY > pico8Size) { continue; }
 
         for (int iX = 0; iX != 8; iX++) {
             // I consider black pixels as transparent same with pixels
             // that are out of the emulated display area on the X axis
-            if (sheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8ScreenSize) { continue; }
+            if (sheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8Size) { continue; }
 			
 			// Small change, I store the placing position to do one final bounds check
 			int pX = (pico8XOrgin + (x + X + iX * xCoefficient) * renderScale);
 			int pY = (pico8YOrgin + (y + Y + iY * yCoefficient) * renderScale);
 
-			if (pX < 0 || pY < 0 || pX > screenResW || pY > screenResH) { continue; }
+			if (pX < 0 || pY < 0 || pX > screenW || pY > screenH) { continue; }
             Display::pushRectUniform(Rect(pX, pY, renderScale, renderScale),
 									pixelColor(sprt, iX, iY, sheet, colorOverride));
         }
     }
 }
-#undef pixelColor
+#undef pixelColor */
+
+// Copies a sprite from the given sprite sheet
+// at the given coordinates on the framebuffer
+template <size_t sprites, size_t rows, size_t columns>
+void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int colorOverride) {
+	static const int noSprite[8][8] = {0};
+    if (!memcmp(sheet[sprt], noSprite, sizeof(noSprite)) || 
+		sprt >= sprites || sprt < 0) { return; };
+	
+
+}
 
 // First piece code out of many to be a near 1:1 to
 // Lemon's code, I'm not reimagining the wheel :)
@@ -99,26 +120,26 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 
 	// Firts we check to see if the whole thing even is in the
 	// Emulated screen, if not why bother ?
-	if (eX <= 0 || eY <= 0 || sX >= pico8ScreenSize || sY >= pico8ScreenSize)
+	if (eX <= 0 || eY <= 0 || sX >= pico8Size || sY >= pico8Size)
 	{ return; }
 	
 	// Then we make sure the rect we try to render is cut to fit
 	// inside the emulated screen using Lemon's CLAMP macro
 	#define CLAMP(v,min,max) v = v < min ? min : v >= max ? max : v
-	CLAMP(sX, 0, pico8ScreenSize); CLAMP(sY, 0, pico8ScreenSize);
-	CLAMP(eX, 0, pico8ScreenSize); CLAMP(eY, 0, pico8ScreenSize);
+	CLAMP(sX, 0, pico8Size); CLAMP(sY, 0, pico8Size);
+	CLAMP(eX, 0, pico8Size); CLAMP(eY, 0, pico8Size);
 	
 	// Now that we know it's fully and only on the emulated Screen
 	// we want to know if it's drawable on the physical screen
 	sX = pico8XOrgin + (sX * renderScale), sY = pico8YOrgin + (sY * renderScale);
 	eX = pico8XOrgin + (eX * renderScale), eY = pico8YOrgin + (eY * renderScale);
-	if (eX <= 0 || eY <= 0 || sX >= screenResW || sY >= screenResH)
+	if (eX <= 0 || eY <= 0 || sX >= screenW || sY >= screenH)
 	{ return; }
 
 	// And then we clamp again but this time to fit the actual screen
 	// So if we have a renderScale > 1 we don't have drawing artefacts
-	CLAMP(sX, 0, screenResW); CLAMP(sY, 0, screenResH);
-	CLAMP(eX, 0, screenResW); CLAMP(eY, 0, screenResH);
+	CLAMP(sX, 0, screenW); CLAMP(sY, 0, screenH);
+	CLAMP(eX, 0, screenW); CLAMP(eY, 0, screenH);
 	#undef CLAMP
 
 	if ((eX > sX) && (eY > sY)) {
@@ -427,7 +448,7 @@ void gameMain() {
 	emuInput();
 
 	if (pauseEmu) {
-		const int x = pico8ScreenSize / 2 - 3 * 4, y = 8;
+		const int x = pico8Size / 2 - 3 * 4, y = 8;
 
 		emuRectFill(x - 1, y - 1, 6 * 4 + x + 1, 6 + y + 1, 6);
 		emuRectFill(x, y, 6 * 4 + x, 6 + y, 0);

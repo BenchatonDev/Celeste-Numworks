@@ -11,14 +11,14 @@
 #include <cstring>
 #include <memory>
 
-#define screenResW Screen::Width
-#define screenResH Screen::Height
+#define screenW Screen::Width
+#define screenH Screen::Height
+#define pico8Size 128
 
-#define pico8XOrgin 32
-#define pico8YOrgin -8
-#define pico8ScreenSize 128
+#define sprtSize 8
 
-extern int palette[16];
+extern uint8_t pico8XOrgin = 32;
+extern uint8_t pico8YOrgin = -8;
 extern bool screenShake;
 extern bool pauseEmu;
 extern void *gameState;
