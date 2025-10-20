@@ -2,7 +2,7 @@
 #include "eadk/eadkpp.h"
 
 // The actual game port THX Lemon :)
-#include "translation.hpp"
+#include "translation.hpp" 
 
 // Saying the namespaces we'll use on a
 // semi regularly so it's less of a
