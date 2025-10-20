@@ -2,24 +2,14 @@
 
 using namespace EADK;
 
-// Rendering variables
-uint8_t basePalette[16] = {0,  1,  2,  3,
-				   	   4,  5,  6,  7,
-					   8,  9,  10, 11,
-					   12, 13, 14, 15};
-uint8_t palette[16] = {0};
-uint8_t frameBuffer[pico8Size][pico8Size] = {0};
-uint8_t bufferSprite[sprtSize][sprtSize] = {0};
-
 // Emulator related variables
+int basePalette[16];
 bool screenShake = true;
 bool pauseEmu = false;
 void *gameState = NULL;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
-uint8_t renderScale = 2;
-uint8_t pico8XOrgin = 32;
-uint8_t pico8YOrgin = -8;
+int renderScale = 2;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -46,7 +36,6 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-/*
 #define pixelColor(i, x, y, sprtSheet, colorOverride) \
     ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sprtSheet)[i][y][x]%16])
 // Renders a sprite from the given sprite sheet
@@ -85,29 +74,7 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
         }
     }
 }
-#undef pixelColor */
-
-// Copies a sprite from the given sprite sheet
-// at the given coordinates on the framebuffer
-template <size_t sprites, size_t rows, size_t columns>
-void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int colorOverride) {
-	static const int noSprite[8][8] = {0};
-    if (!memcmp(sheet[sprt], noSprite, sizeof(noSprite)) || 
-		sprt >= sprites || sprt < 0) { return; };
-	
-	uint8_t startCopy = 0;
-	uint8_t endCopy = sprtSize;
-
-	int cornerX = x + sprtSize
-	int cornerY = y + sprtSize
-
-	if (cornerX < 0 || cornerX >= pico8Size || 
-		cornerY < 0 || cornerY >= pico8Size) { return; }
-	else {
-		startCopy = cornerX - sprtSize < 0 ? 0 : cornerX - sprtSize;
-	}
-
-}
+#undef pixelColor
 
 // First piece code out of many to be a near 1:1 to
 // Lemon's code, I'm not reimagining the wheel :)
@@ -125,7 +92,6 @@ void emuPrint(const char* str, int x, int y, int color) {
 
 #define drawColor(color) palette[color%16]
 void emuRectFill(int x, int y, int width, int height, int color) {
-	/* Quick way to disable the function
 	int sX = x, sY = y;
 	int eX = (sX + width), eY = (sY + height);
 
@@ -155,7 +121,7 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 
 	if ((eX > sX) && (eY > sY)) {
 		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
-	} */
+	}
 }
 
 // A function directly pulled from Lemon's implementation
