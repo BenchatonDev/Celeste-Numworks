@@ -95,6 +95,17 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
     if (!memcmp(sheet[sprt], noSprite, sizeof(noSprite)) || 
 		sprt >= sprites || sprt < 0) { return; };
 	
+	uint8_t startCopy = 0;
+	uint8_t endCopy = sprtSize;
+
+	int cornerX = x + sprtSize
+	int cornerY = y + sprtSize
+
+	if (cornerX < 0 || cornerX >= pico8Size || 
+		cornerY < 0 || cornerY >= pico8Size) { return; }
+	else {
+		startCopy = cornerX - sprtSize < 0 ? 0 : cornerX - sprtSize;
+	}
 
 }
 
