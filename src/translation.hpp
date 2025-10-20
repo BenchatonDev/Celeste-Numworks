@@ -15,8 +15,8 @@
 #define screenH Screen::Height
 
 #define pico8Size 128
-#define pico8XOrgin 32;
-#define pico8YOrgin -8;
+#define pico8XOrgin 32
+#define pico8YOrgin -8
 
 extern int palette[16];
 extern bool screenShake;
