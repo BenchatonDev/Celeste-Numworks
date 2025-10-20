@@ -280,17 +280,17 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				emuRectFill((pico8XOrgin + (cx - 1)), (pico8YOrgin + cy), 3, 1, drawColor(color));
-				emuRectFill((pico8XOrgin + cx), (pico8YOrgin + (cy - 1)), 1, 3, drawColor(color));
+				emuRectFill((cx - 1), cy, 3, 1, drawColor(color));
+				emuRectFill(cx, (cy - 1), 1, 3, drawColor(color));
 
 			} else if (r <= 2) {
-				emuRectFill((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 1)), 5, 3, drawColor(color));
-				emuRectFill((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 2)), 3, 5, drawColor(color));
+				emuRectFill((cx - 2), (cy - 1), 5, 3, drawColor(color));
+				emuRectFill((cx - 1), ((cy - 2)), 3, 5, drawColor(color));
 
 			} else if (r <= 3) {
-				emuRectFill((pico8XOrgin + (cx - 3)), (pico8YOrgin + (cy - 1)), 7, 3, drawColor(color));
-				emuRectFill((pico8XOrgin + (cx - 1)), (pico8YOrgin + (cy - 3)), 3, 7, drawColor(color));
-				emuRectFill((pico8XOrgin + (cx - 2)), (pico8YOrgin + (cy - 2)), 5, 5, drawColor(color));
+				emuRectFill((cx - 3), (cy - 1), 7, 3, drawColor(color));
+				emuRectFill((cx - 1), (cy - 3), 3, 7, drawColor(color));
+				emuRectFill((cx - 2), (cy - 2), 5, 5, drawColor(color));
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
