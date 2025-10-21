@@ -12,6 +12,7 @@ A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https
 
 # Todo :
 - Fix memory leak (I don't know how but yeah... probably in the emuRectFill function)
+  it crashes after 1minute 49seconds but only if paused. preety weird
 - Fix crash at gold chest
 - Add cool bezels on the side of the Pico-8 screen
 - Add Reset functionality
