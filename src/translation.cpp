@@ -51,25 +51,25 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
 	// Better flipping tech from framebuffer-dev branch
 	//(maybe not in performance but it fixes the way I flip sprites
 	// when trying to render one edge outside the screen)
-    #define posX(iX) flipX ? (sprtSize - 1) - iX : iX
-	#define posY(iY) flipY ? (sprtSize - 1) - iY : iY
+    #define posX(iX) flipX ? (8 - 1) - iX : iX
+	#define posY(iY) flipY ? (8 - 1) - iY : iY
 
     // Actually rendering the sprite
     for (int iY = 0; iY != 8; iY++) {
 		// Don't render pixels that are out of the emulated display
 		// area on the Y axis or transparent rows (Idea from framebuffer-dev branch)
 		if (y + iY < 0 || y + iY >= pico8Size ||
-			!memcmp(sheet[sprt][posY(iY)], noSprt[0], sizeof(noSprt[0]))) 
+			!memcmp(sheet[sprt][posY(iY)], noSprite[0], sizeof(noSprite[0])))
 			{ continue; }
 
         for (int iX = 0; iX != 8; iX++) {
             // I consider black pixels as transparent same with pixels
             // that are out of the emulated display area on the X axis
-            if (pixelColor(posX(iX), posY(iY)) == 0 || x + iX < 0 || x + iX >= pico8Size) { continue; }
+            if (palette[(sheet)[sprt][posY(iY)][posX(iX)]%16] == 0 || x + iX < 0 || x + iX >= pico8Size) { continue; }
 			
 			// Small change, I store the placing position to do one final bounds check
-			int pX = (pico8XOrgin + (x + X + iX * xCoefficient) * renderScale);
-			int pY = (pico8YOrgin + (y + Y + iY * yCoefficient) * renderScale);
+			int pX = pico8XOrgin + ((x + iX) * renderScale);
+			int pY = pico8YOrgin + ((y + iY) * renderScale);
 
 			if (pX < 0 || pY < 0 || pX > screenW || pY > screenH) { continue; }
             Display::pushRectUniform(Rect(pX, pY, renderScale, renderScale),
