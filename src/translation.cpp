@@ -9,6 +9,7 @@ uint8_t basePalette[16] = {0,  1,  2,  3,
 					   12, 13, 14, 15};
 uint8_t palette[16] = {0};
 uint8_t frameBuffer[pico8Size][pico8Size] = {0};
+uint8_t rowBuffer[256];
 
 // Emulator related variables
 bool screenShake = true;
@@ -133,10 +134,9 @@ void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t
 
 	// Will always be initialised as we provent 0
 	// Values in the early exit :)
-	uint8_t row[width];
-	memset(row, drawColor(color), width);
+	memset(rowBuffer, drawColor(color), width);
 	for (uint8_t iY = startCopyY; iY < endCopyY; iY++) {
-		memcpy(&frameBuffer[y + iY][x + startCopyX], row, sizeof(uint8_t) * endCopyX);
+		memcpy(&frameBuffer[y + iY][x + startCopyX], rowBuffer, sizeof(uint8_t) * endCopyX);
 	}
 	#undef drawColor
 }
