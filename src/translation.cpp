@@ -64,7 +64,7 @@ void emuSprtRender(uint8_t sprt, int16_t x, int16_t y, bool flipX, bool flipY, c
 	
 	// Calculating the sprite's clip if needed on the X axis
 	uint8_t startCopyX = sprtSize - cornerX <= 0 ? 0 : sprtSize - cornerX;
-	uint8_t endCopyX = pico8Size - x >= sprtSize ? sprtSize - startCopyX : pico8Size - x;
+	uint8_t endCopyX = pico8Size - x >= sprtSize ? sprtSize : pico8Size - x;
 
 	// Copy pasted for the Y axis
 	uint8_t startCopyY = sprtSize - cornerY <= 0 ? 0 : sprtSize - cornerY;
@@ -200,6 +200,8 @@ void emuFbPresent() {
 									 renderScale, renderScale), trueColor(iX, iY));
 		}
 	}
+	uint8_t empty[128][128] = {0};
+	memcpy(frameBuffer, empty, sizeof(empty));
 	#undef trueX
 	#undef trueY
 	#undef trueColor
