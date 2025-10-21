@@ -36,33 +36,36 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-#define pixelColor(i, x, y, sprtSheet, colorOverride) \
-    ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sprtSheet)[i][y][x]%16])
 // Renders a sprite from the given sprite sheet
 // at the given coordinates on the actual screen
 template <size_t sprites, size_t rows, size_t columns>
 void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int colorOverride) {
+	#define pixelColor(x, y) ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sheet)[sprt][y][x]%16])
+	
     // Don't render empty sprites or sprites outside the sheet
 	static const int noSprite[8][8] = {0};
     if (!memcmp(sheet[sprt], noSprite, sizeof(noSprite)) || 
 		sprt >= sprites || sprt < 0) { return; };
 
     // Setting the right values to flip or not the sprite
-    int X = 0, Y = 0;
-    int xCoefficient = 1, yCoefficient = 1;
-    if (flipX) { X = 7; xCoefficient = -1;}
-    if (flipY) { Y = 7; yCoefficient = -1;}
+	// Better flipping tech from framebuffer-dev branch
+	//(maybe not in performance but it fixes the way I flip sprites
+	// when trying to render one edge outside the screen)
+    #define posX(iX) flipX ? (sprtSize - 1) - iX : iX
+	#define posY(iY) flipY ? (sprtSize - 1) - iY : iY
 
     // Actually rendering the sprite
     for (int iY = 0; iY != 8; iY++) {
 		// Don't render pixels that are out of the emulated display
-		// area on the Y axis
-		if (y + iY < 0 || y + iY > pico8Size) { continue; }
+		// area on the Y axis or transparent rows (Idea from framebuffer-dev branch)
+		if (y + iY < 0 || y + iY >= pico8Size ||
+			!memcmp(sheet[sprt][posY(iY)], noSprt[0], sizeof(noSprt[0]))) 
+			{ continue; }
 
         for (int iX = 0; iX != 8; iX++) {
             // I consider black pixels as transparent same with pixels
             // that are out of the emulated display area on the X axis
-            if (sheet[sprt][iY][iX] == 0 || x + iX < 0 || x + iX > pico8Size) { continue; }
+            if (pixelColor(posX(iX), posY(iY)) == 0 || x + iX < 0 || x + iX >= pico8Size) { continue; }
 			
 			// Small change, I store the placing position to do one final bounds check
 			int pX = (pico8XOrgin + (x + X + iX * xCoefficient) * renderScale);
@@ -70,11 +73,11 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
 
 			if (pX < 0 || pY < 0 || pX > screenW || pY > screenH) { continue; }
             Display::pushRectUniform(Rect(pX, pY, renderScale, renderScale),
-									pixelColor(sprt, iX, iY, sheet, colorOverride));
+									 pixelColor(posX(iX), posY(iY)));
         }
     }
+	#undef pixelColor
 }
-#undef pixelColor
 
 // First piece code out of many to be a near 1:1 to
 // Lemon's code, I'm not reimagining the wheel :)
@@ -246,17 +249,17 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				emuRectFill((cx - 1), cy, 3, 1, drawColor(color));
-				emuRectFill(cx, (cy - 1), 1, 3, drawColor(color));
+				emuRectFill((cx - 1), cy, 3, 1, color);
+				emuRectFill(cx, (cy - 1), 1, 3, color);
 
 			} else if (r <= 2) {
-				emuRectFill((cx - 2), (cy - 1), 5, 3, drawColor(color));
-				emuRectFill((cx - 1), ((cy - 2)), 3, 5, drawColor(color));
+				emuRectFill((cx - 2), (cy - 1), 5, 3, color);
+				emuRectFill((cx - 1), ((cy - 2)), 3, 5, color);
 
 			} else if (r <= 3) {
-				emuRectFill((cx - 3), (cy - 1), 7, 3, drawColor(color));
-				emuRectFill((cx - 1), (cy - 3), 3, 7, drawColor(color));
-				emuRectFill((cx - 2), (cy - 2), 5, 5, drawColor(color));
+				emuRectFill((cx - 3), (cy - 1), 7, 3, color);
+				emuRectFill((cx - 1), (cy - 3), 3, 7, color);
+				emuRectFill((cx - 2), (cy - 2), 5, 5, color);
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
@@ -350,44 +353,12 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 					int tile = tilemap_data[x + mx + (y + my)*128];
 					//hack
 					if (mask == 0 || (mask == 4 && tile_flags[tile] == 4) || getTileFlag(tile, mask != 4 ? mask-1 : mask)) {
-						/*
-						SDL_Rect srcrc = {
-							8*(tile % 16),
-							8*(tile / 16)
-						};
-						srcrc.x *= renderScale;
-						srcrc.y *= renderScale;
-						srcrc.w = srcrc.h = renderScale*8;
-						SDL_Rect dstrc = {
-							(tx+x*8 - cameraX)*renderScale, (ty+y*8 - cameraY)*renderScale,
-							renderScale*8, renderScale*8
-						};
-
-						if (0) {
-							srcrc.x = srcrc.y = 0;
-							srcrc.w = srcrc.h = 8;
-							dstrc.x = x*8, dstrc.y = y*8;
-							dstrc.w = dstrc.h = 8;
-						}
-
-						Xblit(gfx, &srcrc, screen, &dstrc, 0, 0, 0); // TODO : replace with direct render of the tile
-						*/
-						
-						// Maybe it should be implemented this way ?
-						
-						/*
-							tile = the sprite index in the list
-						*/
-						
-						// Maybe it should be implemented like this ?
-
 						if (0) {
 							emuSprtRender(tile, (x * 8 - cameraX), (y * 8 - cameraY), false, false, mainSprtSheet, -1);
 							continue;
 						}
 
 						emuSprtRender(tile, (tx + x * 8 - cameraX), (ty + y * 8 - cameraY), false, false, mainSprtSheet, -1);
-						
 					}
 				}
 			}
