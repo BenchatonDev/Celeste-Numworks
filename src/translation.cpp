@@ -125,11 +125,11 @@ void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t
 		width <= 0  || height <= 0) { return; }
 	
 	// Calculating the sprite's clip if needed on the X axis
-	uint8_t startCopyX = width - cornerX <= 0 ? 0 : width - cornerX;
+	uint8_t startCopyX = width - cornerX <= 0 ? 0 : width - (cornerX + 1);
 	uint8_t endCopyX = pico8Size - x >= width ? width - startCopyX : pico8Size - x;
 
 	// Same but for the Y Axis
-	uint8_t startCopyY = height - cornerY <= 0 ? 0 : height - cornerY;
+	uint8_t startCopyY = height - cornerY <= 0 ? 0 : height - (cornerY + 1);
 	uint8_t endCopyY = pico8Size - y >= height ? height : pico8Size - y;
 
 	// Will always be initialised as we provent 0
