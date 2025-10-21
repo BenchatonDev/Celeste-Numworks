@@ -8,12 +8,11 @@
     Celeste Classic on the Numworks Calculator !
 </h1>
 
-A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is OK (probably around the expected 30fps of a PICO-8 game) but the way I chose to directectly render to the screen makes it flicker really fast, if you are light sensitive DO NOT USE IT, which is why I don't provide a build in a release.
+A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is acceptable (probably around 15fps yikes) we don't have pesky flickering here but more for loops which mean performance go down (probably not that much though).
 
 # Todo :
-- Switch direct rendering to a frameBuffer (write Pico8 Screen data to an array/buffer then present it to the screen all at once) to fix flickering
-- Fix Madeline's hair
-- Fix Particule jank
+- Fix memory leak (I don't know how but yeah... probably in the emuRectFill function)
+- Fix crash at gold chest
 - Add cool bezels on the side of the Pico-8 screen
 - Add Reset functionality
 - Maybe add saving / loading
