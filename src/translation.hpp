@@ -15,6 +15,8 @@
 #define screenH Screen::Height
 #define pico8Size 128
 
+#define sprtSize 8
+
 extern uint16_t pico8XOrgin;
 extern uint16_t pico8YOrgin;
 extern bool screenShake;

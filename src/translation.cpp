@@ -48,7 +48,7 @@ void emuInput() {
 // Copies a sprite from the given sprite sheet
 // at the given coordinates on the framebuffer
 template <size_t sprites, size_t rows, size_t columns>
-void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], uint8_t colorOverride) {
+void emuSprtRender(uint8_t sprt, uint8_t x, uint8_t y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], uint8_t colorOverride) {
 	#define pixelColor(x, y) ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sheet)[sprt][y][x]%16])
 
 	// Don't render empty sprites or sprites outside the sheet
@@ -84,7 +84,7 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
 			if (pixelColor(posX(iX), posY(iY)) == 0) { continue; }
 
 			// Place the color on the framebuffer
-			frameBuffer[y + iY][x + iX] = pixelColor(posX(iX), posY(iY))
+			frameBuffer[y + iY][x + iX] = pixelColor(posX(iX), posY(iY));
 		}
 	}
 
@@ -97,7 +97,7 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
 // First piece code out of many to be a near 1:1 to
 // Lemon's code, I'm not reimagining the wheel :)
 // This functions prints the given str to the framebuffer
-void emuPrint(const char* str, int x, int y, int color) {
+void emuPrint(const char* str, uint8_t x, uint8_t y, uint8_t color) {
 	for (char c = *str; c; c = *(++str)) {
 		// This turns the character into it's ASCII number
 		// which is it's sprite number in the font sheet
@@ -110,7 +110,7 @@ void emuPrint(const char* str, int x, int y, int color) {
 }
 
 
-void emuRectFill(int x, int y, int width, int height, int color) {
+void emuRectFill(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint8_t color) {
 	#define drawColor(color) palette[color%16]
 	/* Quick way to disable the function
 	int sX = x, sY = y;
@@ -147,7 +147,7 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 }
 
 // A function directly pulled from Lemon's implementation
-void emuLine(int startX, int startY, int finishX, int finishY, int color) {
+void emuLine(uint8_t startX, uint8_t startY, uint8_t finishX, uint8_t finishY, uint8_t color) {
   #define PLOT(x,y) do {                                                        \
 	 emuRectFill(x, y, 1, 1, color); \
 	} while (0)
@@ -454,7 +454,7 @@ void emuInit() {
 
 	Celeste_P8_set_call_func(emulator);
 
-    memcpy(&palette, defltPalette, sizeof(defltPalette));
+    memcpy(palette, basePalette, sizeof(basePalette));
 
 	gameState = malloc(Celeste_P8_get_state_size());
 	if (gameState) { Celeste_P8_save_state(gameState); }
@@ -484,4 +484,6 @@ void gameMain() {
 		Celeste_P8_draw();
 	}
 	OSDdraw();
+
+	emuFbPresent();
 }
