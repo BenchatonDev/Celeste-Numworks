@@ -17,8 +17,8 @@ void *gameState = NULL;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
 uint8_t renderScale = 2;
-int16_t pico8XOrgin = 32;
-int16_t pico8YOrgin = -8;
+int pico8XOrgin = 32;
+int pico8YOrgin = -8;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -48,7 +48,7 @@ void emuInput() {
 // Copies a sprite from the given sprite sheet
 // at the given coordinates on the framebuffer
 template <size_t sprites, size_t rows, size_t columns>
-void emuSprtRender(uint8_t sprt, uint8_t x, uint8_t y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int8_t colorOverride) {
+void emuSprtRender(uint8_t sprt, int16_t x, int16_t y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int8_t colorOverride) {
 	#define pixelColor(x, y) ((colorOverride) != -1 ? palette[colorOverride%16] : palette[sheet[sprt][y][x]%16])
 
 	// Don't render empty sprites or sprites outside the sheet
@@ -59,8 +59,8 @@ void emuSprtRender(uint8_t sprt, uint8_t x, uint8_t y, bool flipX, bool flipY, c
 	int cornerX = x + sprtSize;
 	int cornerY = y + sprtSize;
 
-	if (cornerX < 0 || cornerX >= pico8Size || 
-		cornerY < 0 || cornerY >= pico8Size) { return; }
+	if (cornerX < 0 || x >= pico8Size || 
+		cornerY < 0 || y >= pico8Size) { return; }
 	
 	// Calculating the sprite's clip if needed on the X axis
 	uint8_t startCopyX = sprtSize - cornerX <= 0 ? 0 : sprtSize - cornerX;
@@ -97,7 +97,7 @@ void emuSprtRender(uint8_t sprt, uint8_t x, uint8_t y, bool flipX, bool flipY, c
 // First piece code out of many to be a near 1:1 to
 // Lemon's code, I'm not reimagining the wheel :)
 // This functions prints the given str to the framebuffer
-void emuPrint(const char* str, uint8_t x, uint8_t y, uint8_t color) {
+void emuPrint(const char* str, int16_t x, int16_t y, uint8_t color) {
 	for (char c = *str; c; c = *(++str)) {
 		// This turns the character into it's ASCII number
 		// which is it's sprite number in the font sheet
@@ -110,7 +110,7 @@ void emuPrint(const char* str, uint8_t x, uint8_t y, uint8_t color) {
 }
 
 
-void emuRectFill(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint8_t color) {
+void emuRectFill(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color) {
 	#define drawColor(color) palette[color%16]
 	/* Quick way to disable the function
 	int sX = x, sY = y;
@@ -147,7 +147,7 @@ void emuRectFill(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint8_t co
 }
 
 // A function directly pulled from Lemon's implementation
-void emuLine(uint8_t startX, uint8_t startY, uint8_t finishX, uint8_t finishY, uint8_t color) {
+void emuLine(int16_t startX, int16_t startY, int16_t finishX, int16_t finishY, uint8_t color) {
   #define PLOT(x,y) do {                                                        \
 	 emuRectFill(x, y, 1, 1, color); \
 	} while (0)
