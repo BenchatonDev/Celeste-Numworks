@@ -17,8 +17,8 @@
 
 #define sprtSize 8
 
-extern uint16_t pico8XOrgin;
-extern uint16_t pico8YOrgin;
+extern int16_t pico8XOrgin;
+extern int16_t pico8YOrgin;
 extern bool screenShake;
 extern bool pauseEmu;
 extern void *gameState;
