@@ -110,46 +110,41 @@ void emuPrint(const char* str, int16_t x, int16_t y, uint8_t color) {
 }
 
 
-void emuRectFill(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color) {
+void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t color) {
 	#define drawColor(color) palette[color%16]
-	/* Quick way to disable the function
-	int sX = x, sY = y;
-	int eX = (sX + width), eY = (sY + height);
 
-	// Firts we check to see if the whole thing even is in the
-	// Emulated screen, if not why bother ?
-	if (eX <= 0 || eY <= 0 || sX >= pico8Size || sY >= pico8Size)
-	{ return; }
+	// Same bounding code as in emuSprtRender 
+	// (absolutely a copy paste)
+
+	int width = (cornerX - x) + 1;
+	int height = (cornerY - y) + 1;
+
+	if (cornerX < 0 || x >= pico8Size || 
+		cornerY < 0 || y >= pico8Size ||
+		width <= 0  || height <= 0) { return; }
 	
-	// Then we make sure the rect we try to render is cut to fit
-	// inside the emulated screen using Lemon's CLAMP macro
-	#define CLAMP(v,min,max) v = v < min ? min : v >= max ? max : v
-	CLAMP(sX, 0, pico8Size); CLAMP(sY, 0, pico8Size);
-	CLAMP(eX, 0, pico8Size); CLAMP(eY, 0, pico8Size);
-	
-	// Now that we know it's fully and only on the emulated Screen
-	// we want to know if it's drawable on the physical screen
-	sX = pico8XOrgin + (sX * renderScale), sY = pico8YOrgin + (sY * renderScale);
-	eX = pico8XOrgin + (eX * renderScale), eY = pico8YOrgin + (eY * renderScale);
-	if (eX <= 0 || eY <= 0 || sX >= screenW || sY >= screenH)
-	{ return; }
+	// Calculating the sprite's clip if needed on the X axis
+	uint8_t startCopyX = width - cornerX <= 0 ? 0 : width - cornerX;
+	uint8_t endCopyX = pico8Size - x >= width ? width - startCopyX : pico8Size - x;
 
-	// And then we clamp again but this time to fit the actual screen
-	// So if we have a renderScale > 1 we don't have drawing artefacts
-	CLAMP(sX, 0, screenW); CLAMP(sY, 0, screenH);
-	CLAMP(eX, 0, screenW); CLAMP(eY, 0, screenH);
-	#undef CLAMP
+	// Same but for the Y Axis
+	uint8_t startCopyY = height - cornerY <= 0 ? 0 : height - cornerY;
+	uint8_t endCopyY = pico8Size - y >= height ? height : pico8Size - y;
 
-	if ((eX > sX) && (eY > sY)) {
-		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
-	} */
+	// Will always be initialised as we provent 0
+	// Values in the early exit :)
+	uint8_t row[width];
+	memset(row, drawColor(color), width);
+	for (uint8_t iY = startCopyY; iY < endCopyY; iY++) {
+		memcpy(&frameBuffer[y + iY][x + startCopyX], row, sizeof(uint8_t) * endCopyX);
+	}
 	#undef drawColor
 }
 
 // A function directly pulled from Lemon's implementation
 void emuLine(int16_t startX, int16_t startY, int16_t finishX, int16_t finishY, uint8_t color) {
   #define PLOT(x,y) do {                                                        \
-	 emuRectFill(x, y, 1, 1, color); \
+	 emuRectFill(x, y, x, y, color); \
 	} while (0)
 	int sx, sy, dx, dy, err, e2;
 	dx = abs(finishX - startX);
@@ -200,8 +195,6 @@ void emuFbPresent() {
 									 renderScale, renderScale), trueColor(iX, iY));
 		}
 	}
-	uint8_t empty[128][128] = {0};
-	memcpy(frameBuffer, empty, sizeof(empty));
 	#undef trueX
 	#undef trueY
 	#undef trueColor
@@ -296,17 +289,17 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				emuRectFill((cx - 1), cy, 3, 1, color);
-				emuRectFill(cx, (cy - 1), 1, 3, color);
+				emuRectFill((cx - 1), cy, (cx - 1) + 2, cy, color);
+				emuRectFill(cx, (cy - 1), cx, (cy - 1) + 2, color);
 
 			} else if (r <= 2) {
-				emuRectFill((cx - 2), (cy - 1), 5, 3, color);
-				emuRectFill((cx - 1), ((cy - 2)), 3, 5, color);
+				emuRectFill((cx - 2), (cy - 1), (cx - 2) + 4, (cy - 1) + 2, color);
+				emuRectFill((cx - 1), ((cy - 2)), (cx - 1) + 2, (cy - 2) + 4, color);
 
 			} else if (r <= 3) {
-				emuRectFill((cx - 3), (cy - 1), 7, 3, color);
-				emuRectFill((cx - 1), (cy - 3), 3, 7, color);
-				emuRectFill((cx - 2), (cy - 2), 5, 5, color);
+				emuRectFill((cx - 3), (cy - 1), (cx - 3) + 6, (cy - 1) + 2, color);
+				emuRectFill((cx - 1), (cy - 3), (cx - 1) + 2, (cy - 3) + 6, color);
+				emuRectFill((cx - 2), (cy - 2), (cx - 2) + 4, (cy - 2) + 4, color);
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
