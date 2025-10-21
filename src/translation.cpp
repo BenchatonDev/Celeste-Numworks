@@ -94,9 +94,11 @@ void emuPrint(const char* str, int x, int y, int color) {
 }
 
 #define drawColor(color) palette[color%16]
-void emuRectFill(int x, int y, int width, int height, int color) {
+void emuRectFill(int x, int y, int x1, int y1, int color) {
 	int sX = x, sY = y;
-	int eX = (sX + width), eY = (sY + height);
+	int eX = x1, eY = y1;
+	int width = (x1 + x) + 1;
+	int height = (y1 - y) + 1;
 
 	// Firts we check to see if the whole thing even is in the
 	// Emulated screen, if not why bother ?
@@ -130,7 +132,7 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 // A function directly pulled from Lemon's implementation
 void emuLine(int startX, int startY, int finishX, int finishY, int color) {
   #define PLOT(x,y) do {                                                        \
-	 emuRectFill(x, y, 1, 1, color); \
+	 emuRectFill(x, y, x, y, color); \
 	} while (0)
 	int sx, sy, dx, dy, err, e2;
 	dx = abs(finishX - startX);
@@ -249,17 +251,17 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int color = INT_ARG();
 
 			if (r <= 1) {
-				emuRectFill((cx - 1), cy, 3, 1, color);
-				emuRectFill(cx, (cy - 1), 1, 3, color);
+				emuRectFill((cx - 1), cy, (cx - 1) + 2, cy, color);
+				emuRectFill(cx, (cy - 1), cx, (cy - 1) + 2, color);
 
 			} else if (r <= 2) {
-				emuRectFill((cx - 2), (cy - 1), 5, 3, color);
-				emuRectFill((cx - 1), ((cy - 2)), 3, 5, color);
+				emuRectFill((cx - 2), (cy - 1), (cx - 2) + 4, (cy - 1) + 2, color);
+				emuRectFill((cx - 1), ((cy - 2)), (cx - 1) + 2, (cy - 2) + 4, color);
 
 			} else if (r <= 3) {
-				emuRectFill((cx - 3), (cy - 1), 7, 3, color);
-				emuRectFill((cx - 1), (cy - 3), 3, 7, color);
-				emuRectFill((cx - 2), (cy - 2), 5, 5, color);
+				emuRectFill((cx - 3), (cy - 1), (cx - 3) + 6, (cy - 1) + 2, color);
+				emuRectFill((cx - 1), (cy - 3), (cx - 1) + 2, (cy - 3) + 6, color);
+				emuRectFill((cx - 2), (cy - 2), (cx - 2) + 4, (cy - 2) + 4, color);
 
 			} else { //i dont think the game uses this
 				int f = 1 - r; //used to track the progress of the drawn circle (since its semi-recursive)
