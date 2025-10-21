@@ -70,8 +70,6 @@ void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t
 	uint8_t startCopyY = cornerY - sprtSize <= 0 ? 0 : cornerY - sprtSize;
 	uint8_t endCopyY = pico8Size - y >= sprtSize ? sprtSize : pico8Size - y;
 
-	uint8_t
-
 	// Stuff for reversal
 	#define posX(iX) flipX ? (sprtSize - 1) - iX : iX
 	#define posY(iY) flipY ? (sprtSize - 1) - iY : iY
@@ -181,6 +179,32 @@ void emuLine(int startX, int startY, int finishX, int finishY, int color) {
 	#undef PLOT
 }
 
+// This function as the name implies "presents" the framebuffer
+// which just means it renders it to the screen ! Hope this fixes
+// (even though is 100% should) the flickering issues we had before
+void emuFbPresent() {
+	#define trueColor(iX, iY) (defltPalette[frameBuffer[iY][iX]%16])
+	#define trueX(iX) (pico8YOrgin + iX)
+	#define trueY(iY) (pico8YOrgin + iY)
+
+	for (uint8_t iY = 0; iY < pico8Size; iY++) {
+		// Proventing artefacts by not using pushRectUniforms on coordinates
+		// Outside the screen :)
+		if (trueY(iY) < 0 || trueY(iY) >= pico8Size) { continue; }
+
+		for (uint8_t iX = 0; iX < pico8Size; iX++) {
+			// Same artefact prevention here
+			if (trueX(iX) < 0 || trueX(iX) >= pico8Size) { continue; }
+
+			Display::pushRectUniform(Rect(trueX(iX) * renderScale, trueY(iY) * renderScale,
+									 renderScale, renderScale), trueColor(iX, iY));
+		}
+	}
+	#undef trueX
+	#undef trueY
+	#undef trueColor
+};
+
 // Another function pulled directly from Lemon's Code
 static int getTileFlag(int tile, int flag) {
 	return tile < sizeof(tile_flags)/sizeof(*tile_flags) && (tile_flags[tile] & (1 << flag)) != 0;
@@ -255,12 +279,12 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int b = INT_ARG();
 			if (a >= 0 && a < 16 && b >= 0 && b < 16) {
 				//swap palette colors
-				palette[a] = defltPalette[b];
+				palette[a] = basePalette[b];
 			}
 		} break;
 
 		case CELESTE_P8_PAL_RESET: { //pal()
-			memcpy(&palette, defltPalette, sizeof(defltPalette));
+			memcpy(&palette, basePalette, sizeof(basePalette));
 		} break;
 
 		case CELESTE_P8_CIRCFILL: { //circfill(x,y,r,col)
