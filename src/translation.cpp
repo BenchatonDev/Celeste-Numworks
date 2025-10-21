@@ -40,7 +40,7 @@ void emuInput() {
 // at the given coordinates on the actual screen
 template <size_t sprites, size_t rows, size_t columns>
 void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int colorOverride) {
-	#define pixelColor(x, y) ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sheet)[sprt][y][x]%16])
+	#define pixelColor(x, y) ((colorOverride) != -1 ? palette[colorOverride%16] : palette[sheet[sprt][y][x]%16])
 	
     // Don't render empty sprites or sprites outside the sheet
 	static const int noSprite[8][8] = {0};
