@@ -2,14 +2,23 @@
 
 using namespace EADK;
 
+// Rendering variables
+uint8_t basePalette[16] = {0,  1,  2,  3,
+				   	   4,  5,  6,  7,
+					   8,  9,  10, 11,
+					   12, 13, 14, 15};
+uint8_t palette[16] = {0};
+uint8_t frameBuffer[pico8Size][pico8Size] = {0};
+
 // Emulator related variables
-int palette[16];
 bool screenShake = true;
 bool pauseEmu = false;
 void *gameState = NULL;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
-int renderScale = 2;
+uint8_t renderScale = 2;
+uint16_t pico8XOrgin = 32;
+uint16_t pico8YOrgin = -8;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -36,51 +45,60 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
-// Renders a sprite from the given sprite sheet
-// at the given coordinates on the actual screen
+// Copies a sprite from the given sprite sheet
+// at the given coordinates on the framebuffer
 template <size_t sprites, size_t rows, size_t columns>
-void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], int colorOverride) {
+void emuSprtRender(int sprt, int x, int y, bool flipX, bool flipY, const uint8_t (&sheet)[sprites][rows][columns], uint8_t colorOverride) {
 	#define pixelColor(x, y) ((colorOverride) != -1 ? palette[colorOverride%16] : palette[(sheet)[sprt][y][x]%16])
-	
-    // Don't render empty sprites or sprites outside the sheet
-	static const int noSprite[8][8] = {0};
-    if (!memcmp(sheet[sprt], noSprite, sizeof(noSprite)) || 
+
+	// Don't render empty sprites or sprites outside the sheet
+	static const int noSprt[8][8] = {0};
+    if (!memcmp(sheet[sprt], noSprt, sizeof(noSprt)) || 
 		sprt >= sprites || sprt < 0) { return; };
 
-    // Setting the right values to flip or not the sprite
-	// Better flipping tech from framebuffer-dev branch
-	//(maybe not in performance but it fixes the way I flip sprites
-	// when trying to render one edge outside the screen)
-    #define posX(iX) flipX ? (8 - 1) - iX : iX
-	#define posY(iY) flipY ? (8 - 1) - iY : iY
+	int cornerX = x + sprtSize;
+	int cornerY = y + sprtSize;
 
-    // Actually rendering the sprite
-    for (int iY = 0; iY != 8; iY++) {
-		// Don't render pixels that are out of the emulated display
-		// area on the Y axis or transparent rows (Idea from framebuffer-dev branch)
-		if (y + iY < 0 || y + iY >= pico8Size ||
-			!memcmp(sheet[sprt][posY(iY)], noSprite[0], sizeof(noSprite[0])))
-			{ continue; }
+	if (cornerX < 0 || cornerX >= pico8Size || 
+		cornerY < 0 || cornerY >= pico8Size) { return; }
+	
+	// Calculating the sprite's clip if needed on the X axis
+	uint8_t startCopyX = cornerX - sprtSize <= 0 ? 0 : cornerX - sprtSize;
+	uint8_t endCopyX = pico8Size - x >= sprtSize ? sprtSize - startCopyX : pico8Size - x;
 
-        for (int iX = 0; iX != 8; iX++) {
-            // I consider black pixels as transparent same with pixels
-            // that are out of the emulated display area on the X axis
-            if (palette[(sheet)[sprt][posY(iY)][posX(iX)]%16] == 0 || x + iX < 0 || x + iX >= pico8Size) { continue; }
-			
-			// Small change, I store the placing position to do one final bounds check
-			int pX = pico8XOrgin + ((x + iX) * renderScale);
-			int pY = pico8YOrgin + ((y + iY) * renderScale);
+	// Copy pasted for the Y axis
+	uint8_t startCopyY = cornerY - sprtSize <= 0 ? 0 : cornerY - sprtSize;
+	uint8_t endCopyY = pico8Size - y >= sprtSize ? sprtSize : pico8Size - y;
 
-			if (pX < 0 || pY < 0 || pX > screenW || pY > screenH) { continue; }
-            Display::pushRectUniform(Rect(pX, pY, renderScale, renderScale),
-									 pixelColor(posX(iX), posY(iY)));
-        }
-    }
+	uint8_t
+
+	// Stuff for reversal
+	#define posX(iX) flipX ? (sprtSize - 1) - iX : iX
+	#define posY(iY) flipY ? (sprtSize - 1) - iY : iY
+
+	// We, at last, write the sprite to our buffer
+	for (uint8_t iY = startCopyY; iY < endCopyY; iY++) {
+		// Don't process black raws (because index 0 will always mean black / transparent)
+		if (!memcmp(sheet[sprt][posY(iY)], noSprt[0], sizeof(noSprt[0]))) { continue; }
+
+		for (uint8_t iX = startCopyX; iX < endCopyX; iX++) {
+			// Skip black pixels (because index 0 will always mean black / transparent)
+			if (pixelColor(posX(iX), posY(iY)) == 0) { continue; }
+
+			// Place the color on the framebuffer
+			frameBuffer[y + iY][x + iX] = pixelColor(posX(iX), posY(iY))
+		}
+	}
+
+	// These macros shouldn't be used anywhere else
+	#undef poxX
+	#undef posY
 	#undef pixelColor
 }
 
 // First piece code out of many to be a near 1:1 to
 // Lemon's code, I'm not reimagining the wheel :)
+// This functions prints the given str to the framebuffer
 void emuPrint(const char* str, int x, int y, int color) {
 	for (char c = *str; c; c = *(++str)) {
 		// This turns the character into it's ASCII number
@@ -93,8 +111,10 @@ void emuPrint(const char* str, int x, int y, int color) {
 	}
 }
 
-#define drawColor(color) palette[color%16]
+
 void emuRectFill(int x, int y, int width, int height, int color) {
+	#define drawColor(color) palette[color%16]
+	/* Quick way to disable the function
 	int sX = x, sY = y;
 	int eX = (sX + width), eY = (sY + height);
 
@@ -124,7 +144,8 @@ void emuRectFill(int x, int y, int width, int height, int color) {
 
 	if ((eX > sX) && (eY > sY)) {
 		Display::pushRectUniform(Rect(sX, sY, (eX - sX), (eY - sY)), drawColor(color));
-	}
+	} */
+	#undef drawColor
 }
 
 // A function directly pulled from Lemon's implementation
@@ -353,12 +374,44 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 					int tile = tilemap_data[x + mx + (y + my)*128];
 					//hack
 					if (mask == 0 || (mask == 4 && tile_flags[tile] == 4) || getTileFlag(tile, mask != 4 ? mask-1 : mask)) {
+						/*
+						SDL_Rect srcrc = {
+							8*(tile % 16),
+							8*(tile / 16)
+						};
+						srcrc.x *= renderScale;
+						srcrc.y *= renderScale;
+						srcrc.w = srcrc.h = renderScale*8;
+						SDL_Rect dstrc = {
+							(tx+x*8 - cameraX)*renderScale, (ty+y*8 - cameraY)*renderScale,
+							renderScale*8, renderScale*8
+						};
+
+						if (0) {
+							srcrc.x = srcrc.y = 0;
+							srcrc.w = srcrc.h = 8;
+							dstrc.x = x*8, dstrc.y = y*8;
+							dstrc.w = dstrc.h = 8;
+						}
+
+						Xblit(gfx, &srcrc, screen, &dstrc, 0, 0, 0); // TODO : replace with direct render of the tile
+						*/
+						
+						// Maybe it should be implemented this way ?
+						
+						/*
+							tile = the sprite index in the list
+						*/
+						
+						// Maybe it should be implemented like this ?
+
 						if (0) {
 							emuSprtRender(tile, (x * 8 - cameraX), (y * 8 - cameraY), false, false, mainSprtSheet, -1);
 							continue;
 						}
 
 						emuSprtRender(tile, (tx + x * 8 - cameraX), (ty + y * 8 - cameraY), false, false, mainSprtSheet, -1);
+						
 					}
 				}
 			}

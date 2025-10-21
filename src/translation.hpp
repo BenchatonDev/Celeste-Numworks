@@ -13,12 +13,10 @@
 
 #define screenW Screen::Width
 #define screenH Screen::Height
-
 #define pico8Size 128
-#define pico8XOrgin 32
-#define pico8YOrgin -8
 
-extern int palette[16];
+extern uint16_t pico8XOrgin;
+extern uint16_t pico8YOrgin;
 extern bool screenShake;
 extern bool pauseEmu;
 extern void *gameState;
