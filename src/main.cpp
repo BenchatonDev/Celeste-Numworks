@@ -24,7 +24,6 @@ int main(void) {
         Display::pushRectUniform(Rect(0,0,32,240), 0x000000);
         Display::pushRectUniform(Rect(288,0,32,240), 0x000000);
     }
-    free(gameState);
 
     return 0;
 }

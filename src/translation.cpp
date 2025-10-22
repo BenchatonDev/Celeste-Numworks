@@ -14,7 +14,6 @@ uint8_t rowBuffer[256];
 // Emulator related variables
 bool screenShake = true;
 bool pauseEmu = false;
-void *gameState = NULL;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
 uint8_t renderScale = 2;
@@ -24,27 +23,6 @@ int pico8YOrgin = -8;
 // Input related variables :
 EADK::Keyboard::State state = 0;
 EADK::Keyboard::State lastState = 0;
-
-// That's where we're handling the actual inputs
-// for the game and OSD (It's here to !)
-void emuInput() {
-    lastState = state;
-    state = Keyboard::scan();
-
-    // Emulator input (functions such as pause etc)
-    if (state.keyDown(Keyboard::Key::Backspace)
-        && !lastState.keyDown(Keyboard::Key::Backspace)) { pauseEmu = !pauseEmu; }
-
-    // TODO : Handle game reset, maybe Saving and loading too
-
-    // Actual game input
-    if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
-	if (state.keyDown(Keyboard::Key::Right)) emuBtnState |= (1<<1);
-	if (state.keyDown(Keyboard::Key::Up))    emuBtnState |= (1<<2);
-	if (state.keyDown(Keyboard::Key::Down))  emuBtnState |= (1<<3);
-	if (state.keyDown(Keyboard::Key::Back)) emuBtnState |= (1<<4);
-	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
-}
 
 // Copies a sprite from the given sprite sheet
 // at the given coordinates on the framebuffer
@@ -212,6 +190,7 @@ static int osdTimer = 0;
 static void OSDset(const char* fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
+	vsnprintf(osdText, sizeof osdText, fmt, ap);
 	osdText[sizeof osdText - 1] = '\0'; //make sure to add NUL terminator in case of truncation
 	osdTimer = 30;
 	va_end(ap);
@@ -220,7 +199,7 @@ static void OSDdraw(void) {
 	if (osdTimer > 0) {
 		--osdTimer;
 		const int x = 4;
-		const int y = 120 + (osdTimer < 10 ? 10-osdTimer : 0); //disappear by going below the screen
+		const int y = 116 + (osdTimer < 10 ? 10-osdTimer : 0); //disappear by going below the screen
 		emuRectFill(x-2, y-2, x+4*strlen(osdText), y+6, 6); //outline
 		emuRectFill(x-1, y-1, x+4*strlen(osdText)-1, y+5, 0);
 		emuPrint(osdText, x, y, 7);
@@ -413,20 +392,59 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 // Simple function that inits some vars
 // or resets them if that's what we're
 // trying to do :)
-void emuInit() {
-
-	Celeste_P8_set_call_func(emulator);
-
+void gameInit() {
     memcpy(palette, basePalette, sizeof(basePalette));
 
-	gameState = malloc(Celeste_P8_get_state_size());
-	if (gameState) { Celeste_P8_save_state(gameState); }
-
 	Celeste_P8_set_rndseed(EADK::random());
-
 	Celeste_P8_init();
+}
+
+// Public function meant to be ran by the our main()
+// program fucntion
+void emuInit() {
+	Celeste_P8_set_call_func(emulator);
+
+	gameInit();
 
     return;
+}
+
+// That's where we're handling the actual inputs
+// for the game and OSD (It's here to !)
+static uint8_t resetTimer = 0;
+void emuInput() {
+    lastState = state;
+    state = Keyboard::scan();
+
+    // Emulator input (functions such as pause etc)
+    if (state.keyDown(Keyboard::Key::Backspace)
+        && !lastState.keyDown(Keyboard::Key::Backspace)) { pauseEmu = !pauseEmu; }
+
+	if (state.keyDown(Keyboard::Key::Toolbox)
+        && !lastState.keyDown(Keyboard::Key::Toolbox))
+		{ screenShake = !screenShake; OSDset("Screenshake: %s", screenShake ? "on" : "off"); }
+	
+	if (state.keyDown(Keyboard::Key::Shift)) {
+		resetTimer++;
+		if (resetTimer >= 30) {
+			resetTimer = 0;
+			
+			OSDset("Reset");
+			pauseEmu = false;
+			
+			gameInit();
+		}
+	} else resetTimer = 0;
+
+    // TODO : Handle game reset, maybe Saving and loading too
+
+    // Actual game input
+    if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
+	if (state.keyDown(Keyboard::Key::Right)) emuBtnState |= (1<<1);
+	if (state.keyDown(Keyboard::Key::Up))    emuBtnState |= (1<<2);
+	if (state.keyDown(Keyboard::Key::Down))  emuBtnState |= (1<<3);
+	if (state.keyDown(Keyboard::Key::Back)) emuBtnState |= (1<<4);
+	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 }
 
 void gameMain() {

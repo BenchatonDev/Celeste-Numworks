@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <cstring>
+#include <string>
 #include <memory>
 
 #define screenW Screen::Width
