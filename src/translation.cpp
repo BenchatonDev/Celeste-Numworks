@@ -5,7 +5,7 @@ using namespace EADK;
 // Rendering variables
 eadk_color_t palette[16] = {0};
 eadk_color_t frameBuffer[pico8Size][pico8Size] = {0};
-eadk_color_t rowBuffer[256];
+eadk_color_t rowBuffer[(renderScale * pico8Size <= 256 ? 256 : renderScale * pico8Size)] = {0};
 
 // Emulator related variables
 void* gameState = NULL;
@@ -13,13 +13,6 @@ bool screenShake = true;
 bool pauseEmu = false;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
-/* uint8_t renderScale = 2;
-int pico8XOrgin = 32;
-int pico8YOrgin = -8; */
-
-uint8_t renderScale = 1;
-int pico8XOrgin = 96;
-int pico8YOrgin = 56;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -91,8 +84,6 @@ void emuPrint(const char* str, int16_t x, int16_t y, uint8_t color) {
 
 
 void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t color) {
-	#define drawColor(color) palette[color%16]
-
 	// Same bounding code as in emuSprtRender 
 	// (absolutely a copy paste)
 
@@ -111,9 +102,8 @@ void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t
 	uint8_t startCopyY = height - cornerY <= 0 ? 0 : height - (cornerY + 1);
 	uint8_t endCopyY = pico8Size - y >= height ? height : pico8Size - y;
 
-	// Will always be initialised as we provent 0
-	// Values in the early exit :)
-	memset(rowBuffer, drawColor(color), sizeof(eadk_color_t) * width);
+	eadk_color_t drawColor = palette[color%16];
+	for (uint8_t iX = 0; iX < endCopyX; iX++) {rowBuffer[iX] = drawColor; }
 	for (uint8_t iY = startCopyY; iY < endCopyY; iY++) {
 		memcpy(&frameBuffer[y + iY][x + startCopyX], rowBuffer, sizeof(eadk_color_t) * endCopyX);
 	}
@@ -157,21 +147,31 @@ void emuLine(int16_t startX, int16_t startY, int16_t finishX, int16_t finishY, u
 // which just means it renders it to the screen ! Hope this fixes
 // (even though is 100% should) the flickering issues we had before
 void emuFbPresent() {
-	#define trueColor(iX, iY) (defltPalette[frameBuffer[iY][iX]%16])
-	#define trueX(iX) pico8XOrgin + (iX * renderScale)
-	#define trueY(iY) pico8YOrgin + (iY * renderScale)
+	#define trueY(iY) pico8YOrigin + (iY * renderScale)
 
 	for (uint8_t iY = 0; iY < pico8Size; iY++) {
 		// Proventing artefacts by not using pushRectUniforms on coordinates
 		// Outside the screen :)
 		if (trueY(iY) < 0 || trueY(iY) >= screenH) { continue; }
 
-		eadk_rect_t dstRect = {pico8XOrgin, trueY(iY), pico8Size * renderScale, 1 * renderScale};
+		eadk_rect_t dstRect = {pico8XOrigin, trueY(iY), pico8Size * renderScale, 1};
+		#if renderScale > 1
+		// Scaling code
+		#pragma unroll
+		for (int iX = 0; iX < pico8Size * renderScale; iX++) {
+			rowBuffer[iX] = frameBuffer[iY][iX/renderScale];
+		}
+		#pragma unroll
+		for (uint8_t i = 0; i < renderScale; i++) {
+			dstRect.y += i;
+			eadk_display_push_rect(dstRect, rowBuffer);
+		}
+		#else
+		// No extra operations if we don't scale :)
 		eadk_display_push_rect(dstRect, frameBuffer[iY]);
+		#endif
 	}
-	#undef trueX
 	#undef trueY
-	#undef trueColor
 };
 
 // Another function pulled directly from Lemon's Code

@@ -33,6 +33,7 @@ int main(void) {
         gameMain();
         
         // Code from Lemon's implementation to cap framerate at exactly 30fps
+        // TODO : Make it more dynamic to get back time lost in long frames
         if (t < 2) targetDeltaTime = 33;
 	    else       targetDeltaTime = 34;
 
