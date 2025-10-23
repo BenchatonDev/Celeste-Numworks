@@ -4,30 +4,16 @@
 
 # "Config" variables
 checkDirectory = "./assets/"
-generatePalette = False
 
 spriteSize = 8
 mainSprtSheet = checkDirectory + "gfx.bmp"
 fontSprtSheet = checkDirectory + "font.bmp"
 
-# Global variables
-palette = []
-
-# I can't get the pylette to generate a clean
-# or should I say accurate palette so that's a
-# problem for futur me ? or not a problem at all
-if generatePalette:
-    from Pylette import extract_colors
-
-    extraction = extract_colors(image=mainSprtSheet, palette_size=16)
-
-    for color in extraction.colors:
-        palette.append("0x" + color.hex.removeprefix("#"))
-else :
-    palette = ["0x000000", "0x1d2b53", "0x7e2553", "0x008751",
-               "0xab5236", "0x5f574f", "0xc2c3c7", "0xfff1e8",
-               "0xff004d", "0xffa300", "0xffec27", "0x00e436",
-               "0x29adff", "0x83769c", "0xff77a8", "0xffccaa"]
+# Global variable
+palette = ["0x0000", "0x216a", "0x792a", "0x042a",
+           "0xaa87", "0x62aa", "0xc618", "0xff9c",
+           "0xf809", "0xfd00", "0xff45", "0x0707",
+           "0x2d7f", "0x83b3", "0xfbb4", "0xfe55"]
 
 from PIL import Image
 
@@ -63,7 +49,7 @@ def processSprtSheet(sprtSheet: str, tgtWidth: int, tgtHeight: int):
                         row = []
                         for x in range(width):
                             r, g, b = pixels[x, y]
-                            color = f"0x{r:02x}{g:02x}{b:02x}"
+                            color = f"0x{((((r * 31 + 127) // 255) << 11) | (((g * 63 + 127) // 255) << 5) | ((b * 31 + 127) // 255)):04x}"
                             row.append(color)
                         hexColorMap.append(row)
                     
@@ -88,14 +74,14 @@ def prettyDataFormat(array: list):
         if i != 0: spacer = "    "
         else: spacer = ""
             
-        if array[i] == [["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"],
-                 ["0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000","0x000000"]]:
+        if array[i] == [["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"],
+                 ["0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000","0x0000"]]:
             string += spacer + "{0}" + additionalStr + "\n\n"
         else:
             string += spacer + "{"
@@ -129,7 +115,8 @@ def prettyDataFormat(array: list):
 # though ? It's only meant to be run once on a "powerful"
 # machine (Relativly to the calculator).
 with open("textures.h", "w") as output:
-    output.write("#pragma once\n\n")
+    output.write("#pragma once\n")
+    output.write('#include "eadk/eadk.h"\n\n')
     tmpString = ""
     tmpSprData = []
     
@@ -143,7 +130,7 @@ with open("textures.h", "w") as output:
             if i in [3, 7, 11]: tmpString += "\n     "
         else:
             tmpString += palette[i]
-    output.write("const int defltPalette[16] = \n    {" + tmpString + "};\n\n")
+    output.write("const eadk_color_t defltPalette[16] = \n    {" + tmpString + "};\n\n")
     
     # More ugly shenanigans but for the main sprite sheet
     # with all the required pretty stuff in the formating
