@@ -21,9 +21,8 @@ int main(void) {
         if (state.keyDown(Keyboard::Key::Home)) { running = false; }
 
         gameMain();
-        Display::pushRectUniform(Rect(0,0,32,240), 0x000000);
-        Display::pushRectUniform(Rect(288,0,32,240), 0x000000);
     }
+    emuShutDown();
 
     return 0;
 }

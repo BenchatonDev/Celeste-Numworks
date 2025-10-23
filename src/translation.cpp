@@ -12,6 +12,7 @@ uint8_t frameBuffer[pico8Size][pico8Size] = {0};
 uint8_t rowBuffer[256];
 
 // Emulator related variables
+void* gameState = NULL;
 bool screenShake = true;
 bool pauseEmu = false;
 uint16_t emuBtnState = 0;
@@ -395,6 +396,8 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 void gameInit() {
     memcpy(palette, basePalette, sizeof(basePalette));
 
+	if (gameState) { Celeste_P8_save_state(gameState); }
+
 	Celeste_P8_set_rndseed(EADK::random());
 	Celeste_P8_init();
 }
@@ -404,7 +407,16 @@ void gameInit() {
 void emuInit() {
 	Celeste_P8_set_call_func(emulator);
 
+	gameState = malloc(Celeste_P8_get_state_size());
+
 	gameInit();
+
+    return;
+}
+
+// Quick function to free allocated memory
+void emuShutDown() {
+	free(gameState);
 
     return;
 }
@@ -436,7 +448,7 @@ void emuInput() {
 		}
 	} else resetTimer = 0;
 
-    // TODO : Handle game reset, maybe Saving and loading too
+    // TODO : Maybe add Saving and loading
 
     // Actual game input
     if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);

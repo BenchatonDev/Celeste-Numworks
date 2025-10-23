@@ -39,4 +39,6 @@ extern EADK::Keyboard::State lastState;
 // Public functions
 void emuInit();
 
+void emuShutDown();
+
 void gameMain();
