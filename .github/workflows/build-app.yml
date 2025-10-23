@@ -25,11 +25,11 @@ jobs:
       run: |
         . /usr/share/nvm/init-nvm.sh
         nvm use 16
-        make
+        make PLATFORM=device
       shell: arch.sh {0}
 
     - name: Archive the artifact
       uses: actions/upload-artifact@v4.6.2
       with:
         name: app-build
-        path: /home/runner/work/Celeste-Numworks/Celeste-Numworks/target/Celeste.nwa
+        path: /home/runner/work/Celeste-Numworks/Celeste-Numworks/target/device/app.nwa
