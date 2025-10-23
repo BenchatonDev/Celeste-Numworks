@@ -3,13 +3,9 @@
 using namespace EADK;
 
 // Rendering variables
-uint8_t basePalette[16] = {0,  1,  2,  3,
-				   	   4,  5,  6,  7,
-					   8,  9,  10, 11,
-					   12, 13, 14, 15};
-uint8_t palette[16] = {0};
-uint8_t frameBuffer[pico8Size][pico8Size] = {0};
-uint8_t rowBuffer[256];
+eadk_color_t palette[16] = {0};
+eadk_color_t frameBuffer[pico8Size][pico8Size] = {0};
+eadk_color_t rowBuffer[256];
 
 // Emulator related variables
 void* gameState = NULL;
@@ -17,9 +13,13 @@ bool screenShake = true;
 bool pauseEmu = false;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
-uint8_t renderScale = 2;
+/* uint8_t renderScale = 2;
 int pico8XOrgin = 32;
-int pico8YOrgin = -8;
+int pico8YOrgin = -8; */
+
+uint8_t renderScale = 1;
+int pico8XOrgin = 96;
+int pico8YOrgin = 56;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -113,9 +113,9 @@ void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t
 
 	// Will always be initialised as we provent 0
 	// Values in the early exit :)
-	memset(rowBuffer, drawColor(color), width);
+	memset(rowBuffer, drawColor(color), sizeof(eadk_color_t) * width);
 	for (uint8_t iY = startCopyY; iY < endCopyY; iY++) {
-		memcpy(&frameBuffer[y + iY][x + startCopyX], rowBuffer, sizeof(uint8_t) * endCopyX);
+		memcpy(&frameBuffer[y + iY][x + startCopyX], rowBuffer, sizeof(eadk_color_t) * endCopyX);
 	}
 	#undef drawColor
 }
@@ -166,13 +166,8 @@ void emuFbPresent() {
 		// Outside the screen :)
 		if (trueY(iY) < 0 || trueY(iY) >= screenH) { continue; }
 
-		for (uint8_t iX = 0; iX < pico8Size; iX++) {
-			// Same artefact prevention here
-			if (trueX(iX) < 0 || trueX(iX) >= screenW) { continue; }
-
-			Display::pushRectUniform(Rect(trueX(iX), trueY(iY),
-									 renderScale, renderScale), trueColor(iX, iY));
-		}
+		eadk_rect_t dstRect = {pico8XOrgin, trueY(iY), pico8Size * renderScale, 1 * renderScale};
+		eadk_display_push_rect(dstRect, frameBuffer[iY]);
 	}
 	#undef trueX
 	#undef trueY
@@ -254,12 +249,12 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			int b = INT_ARG();
 			if (a >= 0 && a < 16 && b >= 0 && b < 16) {
 				//swap palette colors
-				palette[a] = basePalette[b];
+				palette[a] = defltPalette[b];
 			}
 		} break;
 
 		case CELESTE_P8_PAL_RESET: { //pal()
-			memcpy(palette, basePalette, sizeof(basePalette));
+			memcpy(palette, defltPalette, sizeof(defltPalette));
 		} break;
 
 		case CELESTE_P8_CIRCFILL: { //circfill(x,y,r,col)
@@ -394,7 +389,7 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 // or resets them if that's what we're
 // trying to do :)
 void gameInit() {
-    memcpy(palette, basePalette, sizeof(basePalette));
+    memcpy(palette, defltPalette, sizeof(defltPalette));
 
 	if (gameState) { Celeste_P8_save_state(gameState); }
 

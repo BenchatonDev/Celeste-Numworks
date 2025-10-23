@@ -1,6 +1,6 @@
 #pragma once
 #include "eadk/eadkpp.h"
-#include "eadk/eadkpp.h"
+#include "eadk/eadk.h"
 
 #include "textures.h"
 #include "game/celeste.h"
