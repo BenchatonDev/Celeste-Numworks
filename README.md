@@ -8,12 +8,10 @@
     Celeste Classic on the Numworks Calculator !
 </h1>
 
-A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is OK (probably around 27fps or a bit less from comparing in game time to real time) we don't have pesky flickering here but more for loops which mean performance go down (probably not that much though).
+A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is really good but without the frame limiter :/.
 
 # Todo :
-- Improve performance (somewhat done)
-- Fix color bug in emuDrawRect since change to rgb565
-- Find a way to scale renders with eadk_display_push_rect because 1:1 is really small
+- Fix the frame limiter to be more dynamic (Thanks Yaya.Cout for the idea)
 - Add cool bezels on the side of the Pico-8 screen
 - Maybe add saving / loading
 - Maybe switch to cppleste (High performance cpp port by the Celeste Classic community)

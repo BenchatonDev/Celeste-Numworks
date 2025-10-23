@@ -14,8 +14,12 @@
 
 #define screenW Screen::Width
 #define screenH Screen::Height
+
+#define pico8XOrigin 32
+#define pico8YOrigin -8
 #define pico8Size 128
 
+#define renderScale 2
 #define sprtSize 8
 
 extern int pico8XOrgin;
