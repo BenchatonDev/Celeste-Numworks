@@ -11,10 +11,9 @@
 A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is really good but without the frame limiter :/.
 
 # Todo :
-- Fix the frame limiter to be more dynamic (Thanks Yaya.Cout for the idea)
-- Add cool bezels on the side of the Pico-8 screen
+- Maybe add cool bezels on the side of the Pico-8 screen
 - Maybe add saving / loading
-- Maybe switch to cppleste (High performance cpp port by the Celeste Classic community)
+- Maybe make the timer real time accurate (not accurate to the real game but...)
 
 # Controls :
 - Pico-8
@@ -50,5 +49,6 @@ make run
 - [EXOK](https://github.com/EXOK) to be more exact Noel Berry and Matt Thorson. For creating Celeste Classic
 - [Lemon Sherbet](https://github.com/lemon-sherbet/) Who actually ported the game's code to C (I do not claim his code under this repo's license)
 - [Riley0122](https://github.com/riley0122/) For making the template I used (~~MakeFile~~ + Necessary SDK components)
+- [Yaya.Cout](https://github.com/Yaya-Cout) For the frameLimiter's code
 - [Numworks](https://github.com/numworks/) For being as open as allowed by education legislations and providing an SDK
 - [Emilie Feral](https://github.com/emilie-feral) Who made the new MakeFile I use with support for the simulator and web version of Epsilon and for providing a build of the Simulator
