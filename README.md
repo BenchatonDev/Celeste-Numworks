@@ -11,11 +11,7 @@
 A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is OK (probably around the expected 30fps of a PICO-8 game if not a bit more) but the way I chose to directectly render to the screen makes it flicker really fast, if you are light sensitive DO NOT USE IT, which is why I don't provide a build in a release.
 
 # Todo :
-- FrameBuffer rendering issues in the [framebuffer-dev branch](https://github.com/BenchatonDev/Celeste-Numworks/tree/framebuffer-dev)
-- Add cool bezels on the side of the Pico-8 screen
-- Add Reset functionality
-- Maybe add saving / loading
-- Maybe switch to cppleste (High performance cpp port by the Celeste Classic community)
+- Maybe port some features from framebuffer-dev for those who want to burn their eyes
 
 # Controls :
 - Pico-8
