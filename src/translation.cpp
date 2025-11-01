@@ -449,6 +449,13 @@ void emuInput() {
 		}
 	}*/
 
+	#ifdef DEBUG_BUILD
+	if (state.keyDown(Keyboard::Key::Zero)
+        && !lastState.keyDown(Keyboard::Key::Zero)) {
+		Celeste_P8__DEBUG();
+	}
+	#endif
+
     // Actual game input
     if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
 	if (state.keyDown(Keyboard::Key::Right)) emuBtnState |= (1<<1);

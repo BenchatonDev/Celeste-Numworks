@@ -1,9 +1,11 @@
 # Configuration
 Q ?= @
 PLATFORM ?= device
+DEBUG_BUILD ?= 0
 
 SOURCES = $(addprefix src/,\
   main.cpp \
+  limiter.cpp \
   translation.cpp \
   game/celeste.cpp \
   eadk/eadk_vars.cpp \
@@ -85,6 +87,10 @@ CFLAGS = $(shell $(NWLINK) eadk-cflags-$(PLATFORM))
 LDFLAGS = $(shell $(NWLINK) eadk-ldflags-$(PLATFORM))
 CXXFLAGS = $(CFLAGS) -std=c++11 -fno-exceptions -Wall -ggdb
 
+ifeq ($(DEBUG_BUILD), 1)
+CXXFLAGS += -DDEBUG_BUILD
+endif
+
 ifeq ($(PLATFORM),device)
 CXXFLAGS += -mfloat-abi=hard -mcpu=cortex-m7
 CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP
@@ -92,10 +98,10 @@ LDFLAGS += --specs=nano.specs
 # LDFLAGS += --specs=nosys.specs # Alternatively, use full-fledged newlib
 LDFLAGS += -lm
 else ifeq ($(PLATFORM),simulator)
-CXXFLAGS += -O0 -DCELESTE_P8_FIXEDP -g
+CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP -g
 LDFLAGS += $(LD_DYNAMIC_LOOKUP_FLAG)
 else # PLATFORM=web
-CXXFLAGS += -O0 -DCELESTE_P8_FIXEDP -g
+CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP -g
 LDFLAGS += -lc
 endif
 
