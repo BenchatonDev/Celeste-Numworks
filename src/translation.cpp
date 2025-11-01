@@ -8,7 +8,6 @@ eadk_color_t frameBuffer[pico8Size][pico8Size] = {0};
 eadk_color_t rowBuffer[(renderScale * pico8Size <= 256 ? 256 : renderScale * pico8Size)] = {0};
 
 // Emulator related variables
-void* gameState = NULL;
 bool screenShake = true;
 bool pauseEmu = false;
 uint16_t emuBtnState = 0;
@@ -36,12 +35,12 @@ void emuSprtRender(uint8_t sprt, int16_t x, int16_t y, bool flipX, bool flipY, c
 		cornerY < 0 || y >= pico8Size) { return; }
 	
 	// Calculating the sprite's clip if needed on the X axis
-	uint8_t startCopyX = sprtSize - cornerX <= 0 ? 0 : sprtSize - cornerX;
-	uint8_t endCopyX = pico8Size - x >= sprtSize ? sprtSize : pico8Size - x;
+	uint8_t startCopyX = sprtSize - cornerX <= 0 ? 0 : sprtSize - cornerX >= 128 ? 127 : sprtSize - cornerX;
+	uint8_t endCopyX = pico8Size - x >= sprtSize ? sprtSize : pico8Size - x > 128 ? 128 : pico8Size - x;
 
 	// Copy pasted for the Y axis
-	uint8_t startCopyY = sprtSize - cornerY <= 0 ? 0 : sprtSize - cornerY;
-	uint8_t endCopyY = pico8Size - y >= sprtSize ? sprtSize : pico8Size - y;
+	uint8_t startCopyY = sprtSize - cornerY <= 0 ? 0 : sprtSize - cornerY >= 128 ? 127 : sprtSize - cornerY;
+	uint8_t endCopyY = pico8Size - y >= sprtSize ? sprtSize : pico8Size - y > 128 ? 128 : pico8Size - y;
 
 	// Stuff for reversal
 	#define posX(iX) flipX ? (sprtSize - 1) - iX : iX
@@ -82,7 +81,6 @@ void emuPrint(const char* str, int16_t x, int16_t y, uint8_t color) {
 	}
 }
 
-
 void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t color) {
 	// Same bounding code as in emuSprtRender 
 	// (absolutely a copy paste)
@@ -95,12 +93,12 @@ void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t
 		width <= 0  || height <= 0) { return; }
 	
 	// Calculating the sprite's clip if needed on the X axis
-	uint8_t startCopyX = width - cornerX <= 0 ? 0 : width - (cornerX + 1);
-	uint8_t endCopyX = pico8Size - x >= width ? width - startCopyX : pico8Size - x;
+	uint8_t startCopyX = width - cornerX <= 0 ? 0 : width - (cornerX + 1) >= 128 ? 127 : width - (cornerX + 1);
+	uint8_t endCopyX = pico8Size - x >= width ? width - startCopyX : pico8Size - x > 128 ? 128 : pico8Size - x;
 
 	// Same but for the Y Axis
-	uint8_t startCopyY = height - cornerY <= 0 ? 0 : height - (cornerY + 1);
-	uint8_t endCopyY = pico8Size - y >= height ? height : pico8Size - y;
+	uint8_t startCopyY = height - cornerY <= 0 ? 0 : height - (cornerY + 1) >= 128 ? 127 : height - (cornerY + 1);
+	uint8_t endCopyY = pico8Size - y >= height ? height : pico8Size - y > 128 ? 128 : pico8Size - y;
 
 	eadk_color_t drawColor = palette[color%16];
 	for (uint8_t iX = 0; iX < endCopyX; iX++) {rowBuffer[iX] = drawColor; }
@@ -391,8 +389,6 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 void gameInit() {
     memcpy(palette, defltPalette, sizeof(defltPalette));
 
-	if (gameState) { Celeste_P8_save_state(gameState); }
-
 	Celeste_P8_set_rndseed(EADK::random());
 	Celeste_P8_init();
 }
@@ -402,23 +398,13 @@ void gameInit() {
 void emuInit() {
 	Celeste_P8_set_call_func(emulator);
 
-	gameState = malloc(Celeste_P8_get_state_size());
-
 	gameInit();
-
-    return;
-}
-
-// Quick function to free allocated memory
-void emuShutDown() {
-	free(gameState);
 
     return;
 }
 
 // That's where we're handling the actual inputs
 // for the game and OSD (It's here to !)
-static uint8_t resetTimer = 0;
 void emuInput() {
     lastState = state;
     state = Keyboard::scan();
@@ -431,7 +417,8 @@ void emuInput() {
         && !lastState.keyDown(Keyboard::Key::Toolbox))
 		{ screenShake = !screenShake; OSDset("Screenshake: %s", screenShake ? "on" : "off"); }
 	
-	if (state.keyDown(Keyboard::Key::Shift)) {
+	static uint8_t resetTimer = 0;
+	if (state.keyDown(Keyboard::Key::XNT)) {
 		resetTimer++;
 		if (resetTimer >= 30) {
 			resetTimer = 0;
@@ -443,7 +430,24 @@ void emuInput() {
 		}
 	} else resetTimer = 0;
 
-    // TODO : Maybe add Saving and loading
+	// TODO : Maybe add Saving and loading
+	/*
+	if (state.keyDown(Keyboard::Key::Shift)
+        && !lastState.keyDown(Keyboard::Key::Shift)) {
+		if (gameState) {
+			OSDset("Saved game state");
+			Celeste_P8_save_state(gameState);
+		}
+	}
+
+	if (state.keyDown(Keyboard::Key::Alpha)
+        && !lastState.keyDown(Keyboard::Key::Alpha)) {
+		if (gameState) {
+			OSDset("Loaded game state");
+			if (pauseEmu) { pauseEmu = false; }
+			Celeste_P8_load_state(gameState);
+		}
+	}*/
 
     // Actual game input
     if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
