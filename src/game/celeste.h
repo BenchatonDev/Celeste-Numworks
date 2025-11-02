@@ -9,8 +9,6 @@ extern "C" {
 // It's only used in void functions so we can just return nothing
 #define assert(condition) if (!(condition)) { return; }
 
-#define CALCULATOR_SAVING
-
 typedef enum {
 	CELESTE_P8_MUSIC, CELESTE_P8_SPR, CELESTE_P8_BTN, CELESTE_P8_SFX,
 	CELESTE_P8_PAL, CELESTE_P8_PAL_RESET, CELESTE_P8_CIRCFILL, CELESTE_P8_PRINT,
