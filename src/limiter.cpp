@@ -24,7 +24,7 @@ void frameLimiter(uint32_t frameTime) {
             // We don't have time to catch up, so we just sleep until we get to 16ms/f
             EADK::Timing::msleep(differenceToTarget);
         }
-    } else {
+    } else if (timeBudget < targetDeltaTime) {
         // Frame was slower than target, so we need to catch up.
         timeBudget += differenceToTarget;
 
