@@ -34,15 +34,6 @@ int main(void) {
 
         gameMain();
 
-        #ifdef DEBUG_BUILD
-        if (read == EXTRA_READ_FAIL)
-        { Display::drawString("Read Error", location, true, eadk_color_black, eadk_color_red); }
-        else if (read == EXTRA_NOTHING_TO_DO)
-        { Display::drawString("Nothing to Read", location, true, eadk_color_black, eadk_color_red); }
-        else
-        { Display::drawString("Read Success", location, true, eadk_color_black, eadk_color_red); }
-        #endif
-
         frameEndTime = eadk_timing_millis();
 
         // Time to limit the frame rate Whoooooo

@@ -8,10 +8,9 @@
     Celeste Classic on the Numworks Calculator !
 </h1>
 
-A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. It runs at full speed (mostly, you wont notice it though) what can I say !
+A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. It runs at full speed (mostly, you wont notice it though) what can I say ! Oh and saves are persistant through app exit.
 
 # Todo :
-- Fix storage bugs (save loading only works if no python scripts exist for some reason)
 - Maybe add cool bezels on the side of the Pico-8 screen
 - Maybe make the timer real time accurate (not accurate to the real game but...)
 
