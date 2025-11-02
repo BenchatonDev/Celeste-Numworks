@@ -5,9 +5,11 @@ DEBUG_BUILD ?= 0
 
 SOURCES = $(addprefix src/,\
   main.cpp \
+  extra.cpp \
   limiter.cpp \
   translation.cpp \
   game/celeste.cpp \
+  storage/storage.cpp \
   eadk/eadk_vars.cpp \
 )
 
@@ -219,10 +221,13 @@ ifeq ($(OS),Windows_NT)
 	$(Q) powershell -Command "mkdir $@/src"
 	$(Q) powershell -Command "mkdir $@/src/eadk"
 	$(Q) powershell -Command "mkdir $@/src/game"
+  $(Q) powershell -Command "mkdir $@/src/storage"
+  
 else
 	mkdir -p $@/src
 	mkdir $@/src/eadk
 	mkdir $@/src/game
+	mkdir $@/src/storage
 endif
 
 .PHONY: clean
