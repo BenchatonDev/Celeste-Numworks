@@ -19,7 +19,7 @@ A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https
   - `OK`: Dash
   - `BACK`: Jump
   - `Dpad`: Moves around
-- General (Implemented)
+- General
   - `Backspace` : Pause
   - `Shift` : Create SaveState
   - `Alpha` : Load SaveState
