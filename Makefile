@@ -85,7 +85,7 @@ endef
 
 CFLAGS = $(shell $(NWLINK) eadk-cflags-$(PLATFORM))
 LDFLAGS = $(shell $(NWLINK) eadk-ldflags-$(PLATFORM))
-CXXFLAGS = $(CFLAGS) -std=c++11 -fno-exceptions -Wall -ggdb
+CXXFLAGS = $(CFLAGS) -std=c++11 -fno-exceptions -Wall -ggdb -DCALCULATOR_SAVING
 
 ifeq ($(DEBUG_BUILD), 1)
 CXXFLAGS += -DDEBUG_BUILD

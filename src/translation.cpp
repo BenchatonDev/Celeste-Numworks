@@ -8,6 +8,7 @@ eadk_color_t frameBuffer[pico8Size][pico8Size] = {0};
 eadk_color_t rowBuffer[(renderScale * pico8Size <= 256 ? 256 : renderScale * pico8Size)] = {0};
 
 // Emulator related variables
+void* gameState = NULL;
 bool screenShake = true;
 bool pauseEmu = false;
 uint16_t emuBtnState = 0;
@@ -403,6 +404,14 @@ void emuInit() {
     return;
 }
 
+// Function to free any allocated memory on the heap
+// YES it is back because we have saving babyyyy
+void emuShutDown() {
+	if (gameState) { free(gameState); }
+
+	return;
+}
+
 // That's where we're handling the actual inputs
 // for the game and OSD (It's here to !)
 void emuInput() {
@@ -430,12 +439,11 @@ void emuInput() {
 		}
 	} else resetTimer = 0;
 
-	// TODO : Maybe add Saving and loading
-	/*
 	if (state.keyDown(Keyboard::Key::Shift)
         && !lastState.keyDown(Keyboard::Key::Shift)) {
+		gameState = gameState ? gameState : malloc(Celeste_P8_get_state_size());
 		if (gameState) {
-			OSDset("Saved game state");
+			OSDset("Progress saved");
 			Celeste_P8_save_state(gameState);
 		}
 	}
@@ -443,11 +451,11 @@ void emuInput() {
 	if (state.keyDown(Keyboard::Key::Alpha)
         && !lastState.keyDown(Keyboard::Key::Alpha)) {
 		if (gameState) {
-			OSDset("Loaded game state");
+			OSDset("Loaded saved progress");
 			if (pauseEmu) { pauseEmu = false; }
 			Celeste_P8_load_state(gameState);
-		}
-	}*/
+		} else { OSDset("No progress saved"); }
+	}
 
 	#ifdef DEBUG_BUILD
 	if (state.keyDown(Keyboard::Key::Zero)

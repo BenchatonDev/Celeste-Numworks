@@ -309,6 +309,14 @@ static int deaths, max_djump;
 static bool start_game;
 static int start_game_flash;
 
+#ifdef CALCULATOR_SAVING
+// Not actually required for saving, it just makes it
+// fairer because loading puts you back at the start
+// of the room, time spent dying still counts though :)
+static int roomStartFrames, roomStartSeconds;
+static short roomStartMinutes;
+#endif
+
 enum {
   k_left  = 0,
   k_right = 1,
@@ -361,6 +369,14 @@ void Celeste_P8_init() { //identifiers beginning with underscores are reserved i
 	if (!Celeste_P8_call) {
 		//fprintf(stderr, "Warning: Celeste_P8_call is NULL.. have you called Celeste_P8_set_call_func()?\n");
 	}
+
+	#ifdef CALCULATOR_SAVING
+	room = {.x=0,.y=0}, freeze = 0; // Because we don't saveStates on the calculator
+	shake = 0, will_restart = false, delay_restart = 0; // we need to set all the of
+	got_fruit[FRUIT_COUNT] = {false}, has_dashed = false; // the game's variables to
+	sfx_timer = 0, has_key = false, pause_player = false; // their initial values if
+	flash_bg = false, music_timer = 0, new_bg = false; // we want reset to work properly
+	#endif
 
 	PRELUDE();
 
@@ -1671,6 +1687,13 @@ static void load_room(int x, int y) {
    
 	if (!is_title()) {
 		init_object(OBJ_ROOM_TITLE,0,0);
+
+		#ifdef CALCULATOR_SAVING
+		// Each time a game room gets loaded either from a death,
+		// entering it or save loading we update our roomStart vars
+		roomStartFrames = frames, roomStartSeconds = seconds;
+		roomStartMinutes = minutes;
+		#endif
 	}
 }
 
@@ -1997,12 +2020,23 @@ void Celeste_P8__DEBUG(void) {
 }
 
 //all of the global game variables; this holds the entire game state (exc. music/sounds playing)
+#ifndef CALCULATOR_SAVING
+
 #define LISTGVARS(V) \
 	V(rnd_seed_lo) V(rnd_seed_hi) \
 	V(room) V(freeze) V(shake) V(will_restart) V(delay_restart) V(got_fruit) \
 	V(has_dashed) V(sfx_timer) V(has_key) V(pause_player) V(flash_bg) V(music_timer) \
 	V(new_bg) V(frames) V(seconds) V(minutes) V(deaths) V(max_djump) V(start_game) \
 	V(start_game_flash) V(clouds) V(particles) V(dead_particles) V(objects)
+
+#else
+
+#define LISTGVARS(V) \
+	V(rnd_seed_lo) V(rnd_seed_hi) V(room) V(got_fruit) \
+	V(new_bg) V(roomStartSeconds) V(roomStartMinutes) \
+	V(roomStartFrames) V(deaths) V(max_djump) V(start_game)
+
+#endif
 
 size_t Celeste_P8_get_state_size(void) {
 #define V_SIZE(v) (sizeof v) +
@@ -2026,6 +2060,17 @@ void Celeste_P8_load_state(const void* st_) {
 #define V_LOAD(v) memcpy(&v, st, sizeof v), st += sizeof v;
 	LISTGVARS(V_LOAD)
 #undef V_LOAD
+
+	#ifdef CALCULATOR_SAVING
+	// Reload to the room we saved at
+	will_restart = true;
+	delay_restart = 1;
+
+	// Set time back to what it was the last
+	// Time the room we saved at was loaded
+	frames = roomStartFrames, seconds = roomStartSeconds;
+	minutes = roomStartMinutes;
+	#endif
 }
 
 #undef LISTGVARS

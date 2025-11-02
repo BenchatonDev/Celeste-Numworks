@@ -8,11 +8,11 @@
     Celeste Classic on the Numworks Calculator !
 </h1>
 
-A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. Perfromance is really good but without the frame limiter :/.
+A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. It runs at full speed (mostly, you wont notice it though) what can I say !
 
 # Todo :
+- Make saves survive app exit
 - Maybe add cool bezels on the side of the Pico-8 screen
-- Maybe add saving / loading
 - Maybe make the timer real time accurate (not accurate to the real game but...)
 
 # Controls :
@@ -22,13 +22,12 @@ A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https
   - `Dpad`: Moves around
 - General (Implemented)
   - `Backspace` : Pause
-  - `Shift` : Reset
-  - `ScreenShake On/Off` : Toolbox
-  - `Home`: Exit
-- General (To be implemented)
   - `Shift` : Create SaveState
   - `Alpha` : Load SaveState
-  - `XNT` : Remap Reset to that
+  - `XNT` : Reset
+  - `ScreenShake On/Off` : Toolbox
+  - `Home`: Exit
+
 
 # Building
 You'll need the embeded arm compiler and it's optimized std C lib (newlib), nodeJS 16, if you are on MacOS, Windows or a Debian based distro, Numworks provides instructions [here](https://www.numworks.com/engineering/software/build/). If like me you use Arch Linux, I'd recomend you use an AUR helper like [yay](https://github.com/Jguer/yay) and run the following command :
