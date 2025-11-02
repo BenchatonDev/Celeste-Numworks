@@ -39,7 +39,6 @@ int main(void) {
         // Time to limit the frame rate Whoooooo
         frameLimiter(frameEndTime - frameStartTime);
     }
-    writeProgressSave();
     emuShutDown();
 
     return 0;

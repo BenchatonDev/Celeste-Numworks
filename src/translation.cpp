@@ -445,6 +445,7 @@ void emuInput() {
 		if (gameState) {
 			OSDset("Progress saved");
 			Celeste_P8_save_state(gameState);
+			writeProgressSave();
 		}
 	}
 

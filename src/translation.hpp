@@ -3,6 +3,7 @@
 #include "eadk/eadk.h"
 
 #include "textures.h"
+#include "extra.hpp"
 #include "game/celeste.h"
 #include "game/tilemap.h"
 
