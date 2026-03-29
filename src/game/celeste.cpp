@@ -315,6 +315,7 @@ static int start_game_flash;
 // of the room, time spent dying still counts though :)
 static int roomStartFrames, roomStartSeconds;
 static short roomStartMinutes;
+static bool roomStartFruit[FRUIT_COUNT];
 #endif
 
 enum {
@@ -1693,6 +1694,7 @@ static void load_room(int x, int y) {
 		// entering it or save loading we update our roomStart vars
 		roomStartFrames = frames, roomStartSeconds = seconds;
 		roomStartMinutes = minutes;
+		memcpy(roomStartFruit, got_fruit, sizeof(got_fruit));
 		#endif
 	}
 }
@@ -2032,7 +2034,7 @@ void Celeste_P8__DEBUG(void) {
 #else
 
 #define LISTGVARS(V) \
-	V(rnd_seed_lo) V(rnd_seed_hi) V(room) V(got_fruit) \
+	V(rnd_seed_lo) V(rnd_seed_hi) V(room) V(roomStartFruit) \
 	V(new_bg) V(roomStartSeconds) V(roomStartMinutes) \
 	V(roomStartFrames) V(deaths) V(max_djump) V(start_game)
 
@@ -2070,6 +2072,7 @@ void Celeste_P8_load_state(const void* st_) {
 	// Time the room we saved at was loaded
 	frames = roomStartFrames, seconds = roomStartSeconds;
 	minutes = roomStartMinutes;
+	memcpy(got_fruit, roomStartFruit, sizeof(roomStartFruit));
 	#endif
 }
 
