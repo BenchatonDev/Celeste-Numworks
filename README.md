@@ -19,7 +19,7 @@ A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https
   - `OK`: Dash
   - `BACK`: Jump
   - `Dpad`: Moves around
-- General (Implemented)
+- General
   - `Backspace` : Pause
   - `Shift` : Create SaveState
   - `Alpha` : Load SaveState
@@ -44,7 +44,7 @@ make run
 ```
 
 # Acknowledgements
-- [EXOK](https://github.com/EXOK) to be more exact Noel Berry and Matt Thorson. For creating Celeste Classic
+- [EXOK](https://github.com/EXOK) to be more exact Noel Berry and Maddy Thorson. For creating Celeste Classic
 - [Lemon Sherbet](https://github.com/lemon-sherbet/) Who actually ported the game's code to C (I do not claim his code under this repo's license)
 - [Riley0122](https://github.com/riley0122/) For making the template I used (~~MakeFile~~ + Necessary SDK components)
 - [Yaya.Cout](https://github.com/Yaya-Cout) For the frameLimiter's code and making storage.h
