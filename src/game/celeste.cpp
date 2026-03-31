@@ -441,7 +441,7 @@ typedef struct {
 } PARTICLE;
 static PARTICLE particles[25];
 static PARTICLE dead_particles[8];
-static PARTICLE big_chest_particles[50];
+static PARTICLE big_chest_particles[50]; // NOTE: Big Chest object particles moved to a separate array to avoid increasing the size of the Obj structure (only one Big Chest object in the game)
 
 //top level init code has been moved into a function
 static void PRELUDE_initparticles() {
@@ -520,7 +520,7 @@ typedef struct {
 	float index;
 	VECI off2; //changed from off..
 
-        //big chest
+        //NOTE: The Big Chest particle array object has been moved outside of Obj to optimize memory
         int particle_count;
         //flag
         int score;
