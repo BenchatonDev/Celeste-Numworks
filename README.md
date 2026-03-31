@@ -10,10 +10,6 @@
 
 A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. It runs at full speed (mostly, you wont notice it though) what can I say ! Oh and saves are persistant through app exit.
 
-# Todo :
-- Maybe add cool bezels on the side of the Pico-8 screen
-- Maybe make the timer real time accurate (not accurate to the real game but...)
-
 # Controls :
 - Pico-8
   - `OK`: Dash
@@ -48,5 +44,6 @@ make run
 - [Lemon Sherbet](https://github.com/lemon-sherbet/) Who actually ported the game's code to C (I do not claim his code under this repo's license)
 - [Riley0122](https://github.com/riley0122/) For making the template I used (~~MakeFile~~ + Necessary SDK components)
 - [Yaya.Cout](https://github.com/Yaya-Cout) For the frameLimiter's code and making storage.h
+- [Oignontom8283](https://github.com/Oignontom8283) For fixing a crash that could occur on N0115 and N0120 upon app exit
 - [Numworks](https://github.com/numworks/) For being as open as allowed by education legislations and providing an SDK
 - [Emilie Feral](https://github.com/emilie-feral) Who made the new MakeFile I use with support for the simulator and web version of Epsilon and for providing a build of the Simulator
