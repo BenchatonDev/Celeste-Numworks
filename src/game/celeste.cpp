@@ -441,6 +441,7 @@ typedef struct {
 } PARTICLE;
 static PARTICLE particles[25];
 static PARTICLE dead_particles[8];
+static PARTICLE big_chest_particles[50]; // NOTE: Big Chest object particles moved to a separate array to avoid increasing the size of the Obj structure (only one Big Chest object in the game)
 
 //top level init code has been moved into a function
 static void PRELUDE_initparticles() {
@@ -519,13 +520,11 @@ typedef struct {
 	float index;
 	VECI off2; //changed from off..
 
-	//big chest
-	PARTICLE particles[50];
-	int particle_count;
-
-	//flag
-	int score;
-	bool show;
+        //NOTE: The Big Chest particle array object has been moved outside of Obj to optimize memory
+        int particle_count;
+        //flag
+        int score;
+        bool show;
 } OBJ;
 
 //OBJ function declarations fuckery
@@ -1422,7 +1421,7 @@ static void BIG_CHEST_draw(OBJ* this) {
 		shake=5;
 		flash_bg=true;
 		if (this->timer<=45 && this->particle_count<50) {
-			this->particles[this->particle_count++] = (PARTICLE){
+			big_chest_particles[this->particle_count++] = (PARTICLE){
 				.x=1+P8rnd(14),
 				.y=0,
 				.spd=8+P8rnd(8),
@@ -1438,7 +1437,7 @@ static void BIG_CHEST_draw(OBJ* this) {
 			pause_player=false;
 		}
 		for (int i = 0; i < this->particle_count; i++) {
-			PARTICLE* p = &this->particles[i];
+			PARTICLE* p = &big_chest_particles[i];
 			p->y+=p->spd;
 			P8line(this->x+p->x,this->y+8-p->y,this->x+p->x,P8min(this->y+8-p->y+p->h,this->y+8),7);
 		}
