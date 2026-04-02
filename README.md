@@ -8,7 +8,7 @@
     Celeste Classic on the Numworks Calculator !
 </h1>
 
-A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon-sherbet/) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. It runs at full speed (mostly, you wont notice it though) what can I say ! Oh and saves are persistant through app exit.
+A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https://github.com/lemon32767) which it self is a port of Celeste classic for the PICO-8 fantasy console by [EXOK](https://github.com/EXOK) to C/C++. It runs at full speed (mostly, you wont notice it though) what can I say ! Oh and saves are persistant through app exit.
 
 # Controls :
 - Pico-8
@@ -41,7 +41,7 @@ make run
 
 # Acknowledgements
 - [EXOK](https://github.com/EXOK) to be more exact Noel Berry and Maddy Thorson. For creating Celeste Classic
-- [Lemon Sherbet](https://github.com/lemon-sherbet/) Who actually ported the game's code to C (I do not claim his code under this repo's license)
+- [Lemon Sherbet](https://github.com/lemon32767) Who actually ported the game's code to C (I do not claim his code under this repo's license)
 - [Riley0122](https://github.com/riley0122/) For making the template I used (~~MakeFile~~ + Necessary SDK components)
 - [Yaya.Cout](https://github.com/Yaya-Cout) For the frameLimiter's code and making storage.h
 - [Oignontom8283](https://github.com/Oignontom8283) For fixing a crash that could occur on N0115 and N0120 upon app exit
