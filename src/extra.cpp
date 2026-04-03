@@ -1,6 +1,6 @@
 #include "extra.hpp"
 
-#ifdef PLATFORM=device
+#ifdef PLATFORM_DEVICE
 
 // Save file handling area
 #define saveName "CelesteP8.sav"
