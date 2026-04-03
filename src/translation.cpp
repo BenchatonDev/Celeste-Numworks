@@ -11,6 +11,10 @@ eadk_color_t rowBuffer[(renderScale * pico8Size <= 256 ? 256 : renderScale * pic
 void* gameState = NULL;
 bool screenShake = true;
 bool pauseEmu = false;
+bool emuSettings = pauseEmu;
+bool emuAutoSave = false;
+bool emuAutoLoad = false;
+bool emuSaveEnabled = false;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
 
@@ -236,6 +240,22 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
         	emuSprtRender(sprt, (x - cameraX), (y - cameraY), flipX, flipY, mainSprtSheet, -1);
 		} break;
 
+		case CELESTE_P8_LEVELCHANGE: {
+			// Once we load into an actual game room
+			// We can let the player save, this will help
+			// Those with slippery hands
+			emuSaveEnabled = true;
+
+			// Also if auto saving is on, we do the saving
+			if (emuAutoSave) {
+				gameState = gameState ? gameState : malloc(Celeste_P8_get_state_size());
+				if (gameState) {
+					Celeste_P8_save_state(gameState);
+					writeProgressSave();
+				}	
+			}
+		} break;
+
 		case CELESTE_P8_BTN: { //btn(b)
 			int b = INT_ARG();
 
@@ -434,6 +454,7 @@ void emuInput() {
 			
 			OSDset("Reset");
 			pauseEmu = false;
+			emuSaveEnabled = false;
 			
 			gameInit();
 		}
@@ -441,11 +462,13 @@ void emuInput() {
 
 	if (state.keyDown(Keyboard::Key::Shift)
         && !lastState.keyDown(Keyboard::Key::Shift)) {
-		gameState = gameState ? gameState : malloc(Celeste_P8_get_state_size());
-		if (gameState) {
-			OSDset("Progress saved");
-			Celeste_P8_save_state(gameState);
-			writeProgressSave();
+		if (!emuSaveEnabled) { OSDset("No progress to save"); } else {
+			gameState = gameState ? gameState : malloc(Celeste_P8_get_state_size());
+			if (gameState) {
+				OSDset("Progress saved");
+				Celeste_P8_save_state(gameState);
+				writeProgressSave();
+			}
 		}
 	}
 

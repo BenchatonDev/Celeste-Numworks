@@ -26,6 +26,9 @@ extern int pico8XOrgin;
 extern int pico8YOrgin;
 extern bool screenShake;
 extern bool pauseEmu;
+extern bool emuSettings;
+extern bool emuAutoSave;
+extern bool emuAutoLoad;
 extern void *gameState;
 
 // I'm following Lemon's way
