@@ -1,5 +1,7 @@
 #include "extra.hpp"
 
+#ifdef PLATFORM=device
+
 // Save file handling area
 #define saveName "CelesteP8.sav"
 #define stateSize Celeste_P8_get_state_size()
@@ -28,3 +30,15 @@ int writeProgressSave() {
     if (extapp_fileWrite(saveName, fileData, stateSize))
     { return EXTRA_SUCCESS; } else { return EXTRA_WRITE_FAIL; }
 }
+
+#else
+
+int loadProgressSave() {
+    return EXTRA_NOTHING_TO_DO;
+}
+
+int writeProgressSave() {
+    return EXTRA_NOTHING_TO_DO;
+}
+
+#endif

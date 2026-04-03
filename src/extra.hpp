@@ -6,7 +6,10 @@
 #include <cstring>
 
 #include "translation.hpp"
+
+#ifdef PLATFORM=device
 #include "storage/storage.h"
+#endif
 
 // Exit codes for our functions
 #define EXTRA_NOTHING_TO_DO 2

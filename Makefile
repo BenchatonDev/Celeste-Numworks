@@ -9,7 +9,6 @@ SOURCES = $(addprefix src/,\
   limiter.cpp \
   translation.cpp \
   game/celeste.cpp \
-  storage/storage.cpp \
   eadk/eadk_vars.cpp \
 )
 
@@ -96,11 +95,12 @@ endif
 ifeq ($(PLATFORM),device)
 CXXFLAGS += -mfloat-abi=hard -mcpu=cortex-m7
 CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP
+SOURCES += $(addprefix src/, storage/storage.cpp)
 LDFLAGS += --specs=nano.specs
 # LDFLAGS += --specs=nosys.specs # Alternatively, use full-fledged newlib
 LDFLAGS += -lm
 else ifeq ($(PLATFORM),simulator)
-CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP -g
+CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP -DDEBUG_BUILD -g
 LDFLAGS += $(LD_DYNAMIC_LOOKUP_FLAG)
 else # PLATFORM=web
 CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP -g
