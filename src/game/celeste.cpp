@@ -136,7 +136,6 @@ static void PRELUDE_initparticles(void);
 static void title_screen(void);
 static void load_room(int x, int y);
 static void next_room(void);
-static void psfx(int num);
 static void restart_room(void);
 
 #define bool Celeste_P8_bool_t
@@ -167,17 +166,14 @@ void Celeste_P8_set_rndseed(unsigned seed) {
 }
 
 ///////PICO-8 functions
-static inline void P8music(int track, int fade, int mask) {
-	Celeste_P8_call(CELESTE_P8_MUSIC, track, fade, mask);
-}
 static inline void P8spr(int sprite, int x, int y, int cols, int rows, bool flipx, bool flipy) {
 	Celeste_P8_call(CELESTE_P8_SPR, sprite, x, y, cols, rows, flipx, flipy);
 }
 static inline bool P8btn(int b) {
 	return Celeste_P8_call(CELESTE_P8_BTN, b);
 }
-static inline void P8sfx(int id) {
-	Celeste_P8_call(CELESTE_P8_SFX, id);
+static inline void P8levelchange() {
+	Celeste_P8_call(CELESTE_P8_LEVELCHANGE);
 }
 static inline void P8pal(int a, int b) {
 	Celeste_P8_call(CELESTE_P8_PAL, a, b);
@@ -295,11 +291,9 @@ static bool will_restart = false;
 static int delay_restart = 0;
 static bool got_fruit[FRUIT_COUNT] = {false};
 static bool has_dashed = false;
-static int sfx_timer = 0;
 static bool has_key = false;
 static bool pause_player = false;
 static bool flash_bg = false;
-static int music_timer = 0;
 
 //these are originally implicit globals defined in title_screen()
 static bool new_bg = false;
@@ -309,14 +303,14 @@ static int deaths, max_djump;
 static bool start_game;
 static int start_game_flash;
 
-#ifdef CALCULATOR_SAVING
+// START OF CALCULATOR_SAVING
 // Not actually required for saving, it just makes it
 // fairer because loading puts you back at the start
 // of the room, time spent dying still counts though :)
 static int roomStartFrames, roomStartSeconds;
 static short roomStartMinutes;
 static bool roomStartFruit[FRUIT_COUNT];
-#endif
+// END OF CALCULATOR_SAVING
 
 enum {
   k_left  = 0,
@@ -371,13 +365,13 @@ void Celeste_P8_init() { //identifiers beginning with underscores are reserved i
 		//fprintf(stderr, "Warning: Celeste_P8_call is NULL.. have you called Celeste_P8_set_call_func()?\n");
 	}
 
-	#ifdef CALCULATOR_SAVING
+	// CALCULATOR_SAVING
 	room = {.x=0,.y=0}, freeze = 0; // Because we don't saveStates on the calculator
 	shake = 0, will_restart = false, delay_restart = 0; // we need to set all the of
 	got_fruit[FRUIT_COUNT] = {false}, has_dashed = false; // the game's variables to
-	sfx_timer = 0, has_key = false, pause_player = false; // their initial values if
-	flash_bg = false, music_timer = 0, new_bg = false; // we want reset to work properly
-	#endif
+	has_key = false, pause_player = false; // their initial values if
+	flash_bg = false, new_bg = false; // we want reset to work properly
+	// END OF CALCULATOR_SAVING
 
 	PRELUDE();
 
@@ -392,7 +386,6 @@ static void title_screen() {
 	max_djump=1;
 	start_game=false;
 	start_game_flash=0;
-	P8music(40,0,7);
    
 	load_room(7,3);
 }
@@ -401,9 +394,7 @@ static void begin_game() {
 	frames=0;
 	seconds=0;
 	minutes=0;
-	music_timer=0;
 	start_game=false;
-	P8music(0,0,7);
 	load_room(0,0);
 }
 
@@ -506,7 +497,6 @@ typedef struct {
 	//fly_fruit
 	bool fly;
 	float step;
-	int sfx_delay;
 
 	//lifeup
 	int duration;
@@ -740,7 +730,6 @@ static void PLAYER_update(OBJ* this) {
 	if (on_ground) {
 		this->grace=6;
 		if (this->djump<max_djump) {
-			psfx(54);
 			this->djump=max_djump;
 		}
 	} else if (this->grace > 0) {
@@ -804,7 +793,6 @@ static void PLAYER_update(OBJ* this) {
 		if (this->jbuffer>0) {
 			if (this->grace>0) {
 				// normal jump
-				psfx(1);
 				this->jbuffer=0;
 				this->grace=0;
 				this->spd.y=-2;
@@ -813,7 +801,6 @@ static void PLAYER_update(OBJ* this) {
 				// wall jump
 				int wall_dir=(OBJ_is_solid(this, -3,0) ? -1 : (OBJ_is_solid(this, 3,0) ? 1 : 0));
 				if (wall_dir!=0) {
-					psfx(2);
 					this->jbuffer=0;
 					this->spd.y=-2;
 					this->spd.x=-wall_dir*(maxrun+1);
@@ -851,7 +838,6 @@ static void PLAYER_update(OBJ* this) {
 				this->spd.y=0;
 			}
 		
-			psfx(3);
 			freeze=2;
 			shake=6;
 			this->dash_target.x=2*sign(this->spd.x);
@@ -870,7 +856,6 @@ static void PLAYER_update(OBJ* this) {
 				this->dash_accel.y*=0.70710678118f;
 			}
 		} else if (dash && this->djump<=0) {
-			psfx(9);
 			init_object(OBJ_SMOKE,this->x,this->y);
 		}
 	}
@@ -912,12 +897,6 @@ static void PLAYER_draw(OBJ* this) {
 	unset_hair_color();
 }
 
-static void psfx(int num) {
-	if (sfx_timer<=0) {
-		P8sfx(num);
-	}
-}
-
 void create_hair(OBJ* obj) {
 	/*obj->hair = {};*/
 	for (int i=0;i<=4;i++) {
@@ -950,7 +929,6 @@ static void unset_hair_color() {
 
 //player_spawn
 static void PLAYER_SPAWN_init(OBJ* this) {
-	P8sfx(4);
 	this->spr=3;
 	this->target.x=this->x;
 	this->target.y=this->y;
@@ -982,7 +960,6 @@ static void PLAYER_SPAWN_update(OBJ* this) {
 			this->delay=5;
 			shake=5;
 			init_object(OBJ_SMOKE,this->x,this->y+4);
-			P8sfx(5);
 		}
 	// landing
 	} else if (this->state==2) {
@@ -1030,8 +1007,6 @@ static void SPRING_update(OBJ* this) {
 			if (below != NULL) {
 				break_fall_floor(below);
 			}
-			 
-			psfx(8);
 		}
 	} else if (this->delay>0) {
 		this->delay-=1;
@@ -1071,7 +1046,6 @@ static void BALLOON_update(OBJ* this) {
 #endif
 		OBJ* hit = OBJ_collide(this, OBJ_PLAYER, 0,0);
 		if (hit != NULL && hit->djump<max_djump) {
-			psfx(6);
 			init_object(OBJ_SMOKE,this->x,this->y);
 			hit->djump=max_djump;
 			this->spr=0;
@@ -1080,7 +1054,6 @@ static void BALLOON_update(OBJ* this) {
 	} else if (this->timer>0) {
 		this->timer-=1;
 	} else { 
-		psfx(7);
 		init_object(OBJ_SMOKE,this->x,this->y);
 		this->spr=22;
 	}
@@ -1116,7 +1089,6 @@ static void FALL_FLOOR_update(OBJ* this) {
 	} else if (this->state==2) {
 		this->delay-=1;
 		if (this->delay<=0 && !OBJ_check(this, OBJ_PLAYER,0,0)) {
-			psfx(7);
 			this->state=0;
 			this->collideable=true;
 			init_object(OBJ_SMOKE,this->x,this->y);
@@ -1135,7 +1107,6 @@ static void FALL_FLOOR_draw(OBJ* this) {
 
 static void break_fall_floor(OBJ* obj) {
 	if (obj->state==0) {
-		psfx(15);
 		obj->state=1;
 		obj->delay=15;//how long until it falls
 		init_object(OBJ_SMOKE,obj->x,obj->y);
@@ -1175,8 +1146,6 @@ static void FRUIT_update(OBJ* this) {
 	OBJ* hit=OBJ_collide(this, OBJ_PLAYER,0,0);
 	if (hit!=NULL) {
 		hit->djump=max_djump;
-		sfx_timer=20;
-		P8sfx(13);
 		got_fruit[level_index()] = true;
 		init_object(OBJ_LIFEUP,this->x,this->y);
 		destroy_object(this);
@@ -1194,19 +1163,11 @@ static void FLY_FRUIT_init(OBJ* this) {
 	this->fly=false;
 	this->step=0.5;
 	this->solids=false;
-	this->sfx_delay=8;
 }
 static void FLY_FRUIT_update(OBJ* this) {
 	bool do_destroy_object = false; //LEMON: see PLAYER_update..
 	//fly away
 	if (this->fly) {
-		if (this->sfx_delay>0) {
-			this->sfx_delay-=1;
-			if (this->sfx_delay<=0) {
-				sfx_timer=20;
-				P8sfx(14);
-			}
-		}
 		this->spd.y=appr(this->spd.y,-3.5,0.25);
 		if (this->y<-16) {
 			do_destroy_object = true;
@@ -1223,8 +1184,6 @@ static void FLY_FRUIT_update(OBJ* this) {
 	OBJ* hit=OBJ_collide(this, OBJ_PLAYER,0,0);
 	if (hit!=NULL) {
 		hit->djump=max_djump;
-		sfx_timer=20;
-		P8sfx(13);
 		got_fruit[level_index()] = true;
 		init_object(OBJ_LIFEUP,this->x,this->y);
 		do_destroy_object = true;
@@ -1277,8 +1236,6 @@ static void FAKE_WALL_update(OBJ* this) {
 		hit->spd.x=-sign(hit->spd.x)*1.5;
 		hit->spd.y=-1.5;
 		hit->dash_time=-1;
-		sfx_timer=20;
-		P8sfx(16);
 		//destroy_object(this);
 		init_object(OBJ_SMOKE,this->x,this->y);
 		init_object(OBJ_SMOKE,this->x+8,this->y);
@@ -1308,8 +1265,6 @@ static void KEY_update(OBJ* this) {
 		this->flip_x=!this->flip_x;
 	}
 	if (OBJ_check(this, OBJ_PLAYER,0,0)) {
-		P8sfx(23);
-		sfx_timer=10;
 		destroy_object(this);
 		has_key=true;
 	}
@@ -1328,8 +1283,6 @@ static void CHEST_update(OBJ* this) {
 		this->timer-=1;
 		this->x=this->start-1+P8rnd(3);
 		if (this->timer<=0) {
-			sfx_timer=20;
-			P8sfx(16);
 			init_object(OBJ_FRUIT,this->x,this->y-4);
 			destroy_object(this);
 		}
@@ -1370,7 +1323,6 @@ static void MESSAGE_draw(OBJ* this) {
 			this->index+=0.5;
 			if (this->index>=this->last+1) {
 				this->last+=1;
-				P8sfx(35);
 			}
 		}
 		this->off2.x=8;
@@ -1403,8 +1355,6 @@ static void BIG_CHEST_draw(OBJ* this) {
 	if (this->state==0) {
 		OBJ* hit=OBJ_collide(this, OBJ_PLAYER,0,8);
 		if (hit!=NULL && OBJ_is_solid(hit, 0,1)) {
-			P8music(-1,500,7);
-			P8sfx(37);
 			pause_player=true;
 			hit->spd.x=0;
 			hit->spd.y=0;
@@ -1457,8 +1407,6 @@ static void ORB_draw(OBJ* this) {
 	OBJ* hit=OBJ_collide(this, OBJ_PLAYER,0,0);
 	bool destroy_self = false;
 	if (this->spd.y==0 && hit!=NULL) {
-		music_timer=45;
-		P8sfx(51);
 		freeze=10;
 		shake=10;
 		destroy_self = true; //LEMON: to avoid reading off dead object
@@ -1504,8 +1452,6 @@ static void FLAG_draw(OBJ* this) {
 			P8print(str,48,24,7);
 		}
 	} else if (OBJ_check(this, OBJ_PLAYER,0,0)) {
-		P8sfx(55);
-		sfx_timer=30;
 		this->show=true;
 	}
 }
@@ -1595,8 +1541,6 @@ static void destroy_object(OBJ* obj) {
 }
 
 static void kill_player(OBJ* obj) {
-	sfx_timer=12;
-	P8sfx(0);
 	deaths+=1;
 	shake=10;
 	//destroy_object(obj);
@@ -1627,16 +1571,6 @@ static void restart_room() {
 }
 
 static void next_room() {
-	if (room.x==2 && room.y==1) {
-		P8music(30,500,7);
-	} else if (room.x==3 && room.y==1) {
-		P8music(20,500,7);
-	} else if (room.x==4 && room.y==2) {
-		P8music(30,500,7);
-	} else if (room.x==5 && room.y==3) {
-		P8music(30,500,7);
-	}
-
 	if (room.x==7) {
 		load_room(0,room.y+1);
 	} else {
@@ -1688,13 +1622,18 @@ static void load_room(int x, int y) {
 	if (!is_title()) {
 		init_object(OBJ_ROOM_TITLE,0,0);
 
-		#ifdef CALCULATOR_SAVING
+		// CALCULATOR_SAVING
 		// Each time a game room gets loaded either from a death,
 		// entering it or save loading we update our roomStart vars
 		roomStartFrames = frames, roomStartSeconds = seconds;
 		roomStartMinutes = minutes;
 		memcpy(roomStartFruit, got_fruit, sizeof(got_fruit));
-		#endif
+
+		// This callback allows us to do shit when
+		// A game room that isn't the main menu like
+		// Not allowing saving on the main menu or Auto saves
+		P8levelchange();
+		// END OF CALCULATOR_SAVING
 	}
 }
 
@@ -1708,17 +1647,6 @@ void Celeste_P8_update() {
 		if (seconds==0) {
 			minutes+=1;
 		}
-	}
-   
-	if (music_timer>0) {
-		music_timer-=1;
-		if (music_timer<=0) {
-			P8music(10,0,7);
-		}
-	}
-   
-	if (sfx_timer>0) {
-		sfx_timer-=1;
 	}
    
 	// cancel if (freeze
@@ -1774,10 +1702,8 @@ void Celeste_P8_update() {
 	// start game
 	if (is_title()) {
 		if (!start_game && (P8btn(k_jump) || P8btn(k_dash))) {
-			P8music(-1, 0, 0);
 			start_game_flash=50;
 			start_game=true;
-			P8sfx(38);
 		}
 		if (start_game) {
 			start_game_flash-=1;
@@ -2020,24 +1946,11 @@ void Celeste_P8__DEBUG(void) {
 	else next_room();
 }
 
-//all of the global game variables; this holds the entire game state (exc. music/sounds playing)
-#ifndef CALCULATOR_SAVING
-
-#define LISTGVARS(V) \
-	V(rnd_seed_lo) V(rnd_seed_hi) \
-	V(room) V(freeze) V(shake) V(will_restart) V(delay_restart) V(got_fruit) \
-	V(has_dashed) V(sfx_timer) V(has_key) V(pause_player) V(flash_bg) V(music_timer) \
-	V(new_bg) V(frames) V(seconds) V(minutes) V(deaths) V(max_djump) V(start_game) \
-	V(start_game_flash) V(clouds) V(particles) V(dead_particles) V(objects)
-
-#else
-
+// all of the basic game variables that need saving
 #define LISTGVARS(V) \
 	V(rnd_seed_lo) V(rnd_seed_hi) V(room) V(roomStartFruit) \
 	V(new_bg) V(roomStartSeconds) V(roomStartMinutes) \
 	V(roomStartFrames) V(deaths) V(max_djump) V(start_game)
-
-#endif
 
 size_t Celeste_P8_get_state_size(void) {
 #define V_SIZE(v) (sizeof v) +
@@ -2062,7 +1975,7 @@ void Celeste_P8_load_state(const void* st_) {
 	LISTGVARS(V_LOAD)
 #undef V_LOAD
 
-	#ifdef CALCULATOR_SAVING
+	// CALCULATOR_SAVING
 	// Reload to the room we saved at
 	will_restart = true;
 	delay_restart = 1;
@@ -2072,7 +1985,7 @@ void Celeste_P8_load_state(const void* st_) {
 	frames = roomStartFrames, seconds = roomStartSeconds;
 	minutes = roomStartMinutes;
 	memcpy(got_fruit, roomStartFruit, sizeof(roomStartFruit));
-	#endif
+	// END OF CALCULATOR_SAVING
 }
 
 #undef LISTGVARS
