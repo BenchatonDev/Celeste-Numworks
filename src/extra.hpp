@@ -7,7 +7,7 @@
 
 #include "translation.hpp"
 
-#ifdef PLATFORM=device
+#ifdef PLATFORM_DEVICE
 #include "storage/storage.h"
 #endif
 
