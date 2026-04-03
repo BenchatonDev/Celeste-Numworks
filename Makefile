@@ -94,7 +94,7 @@ endif
 
 ifeq ($(PLATFORM),device)
 CXXFLAGS += -mfloat-abi=hard -mcpu=cortex-m7
-CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP
+CXXFLAGS += -O3 -DCELESTE_P8_FIXEDP -DPLATFORM_DEVICE
 SOURCES += $(addprefix src/, storage/storage.cpp)
 LDFLAGS += --specs=nano.specs
 # LDFLAGS += --specs=nosys.specs # Alternatively, use full-fledged newlib
