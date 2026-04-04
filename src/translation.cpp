@@ -8,15 +8,18 @@ eadk_color_t frameBuffer[pico8Size][pico8Size] = {0};
 eadk_color_t rowBuffer[(renderScale * pico8Size <= 256 ? 256 : renderScale * pico8Size)] = {0};
 
 // Emulator related variables
-void* gameState = NULL;
 bool screenShake = true;
-bool pauseEmu = false;
-bool emuSettings = pauseEmu;
+bool emuPause = false;
+bool emuSettings = emuPause;
 bool emuAutoSave = false;
 bool emuAutoLoad = false;
 bool emuSaveEnabled = false;
+bool emuAutoSaveFirst = true;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
+
+// Selected setting index
+uint8_t settingIndex = 0;
 
 // Input related variables :
 EADK::Keyboard::State state = 0;
@@ -63,7 +66,7 @@ void emuSprtRender(uint8_t sprt, int16_t x, int16_t y, bool flipX, bool flipY, c
 			// Place the color on the framebuffer
 			frameBuffer[y + iY][x + iX] = pixelColor(posX(iX), posY(iY));
 		}
-	}
+	} return;
 
 	// These macros shouldn't be used anywhere else
 	#undef poxX
@@ -83,7 +86,7 @@ void emuPrint(const char* str, int16_t x, int16_t y, uint8_t color) {
 		// Just render the char whih the given color override
 		emuSprtRender(c, x, y, false, false, fontSprtSheet, color);
 		x += 4;
-	}
+	} return;
 }
 
 void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t color) {
@@ -109,7 +112,7 @@ void emuRectFill(int16_t x, int16_t y, int16_t cornerX, int16_t cornerY, uint8_t
 	for (uint8_t iX = 0; iX < endCopyX; iX++) {rowBuffer[iX] = drawColor; }
 	for (uint8_t iY = startCopyY; iY < endCopyY; iY++) {
 		memcpy(&frameBuffer[y + iY][x + startCopyX], rowBuffer, sizeof(eadk_color_t) * endCopyX);
-	}
+	} return;
 	#undef drawColor
 }
 
@@ -142,7 +145,7 @@ void emuLine(int16_t startX, int16_t startY, int16_t finishX, int16_t finishY, u
 			err += dx;
 			startY += sy;
 		}
-	}
+	} return;
 	#undef PLOT
 }
 
@@ -173,7 +176,7 @@ void emuFbPresent() {
 		// No extra operations if we don't scale :)
 		eadk_display_push_rect(dstRect, frameBuffer[iY]);
 		#endif
-	}
+	} return;
 	#undef trueY
 };
 
@@ -193,6 +196,8 @@ static void OSDset(const char* fmt, ...) {
 	osdText[sizeof osdText - 1] = '\0'; //make sure to add NUL terminator in case of truncation
 	osdTimer = 30;
 	va_end(ap);
+
+	return;
 }
 static void OSDdraw(void) {
 	if (osdTimer > 0) {
@@ -202,7 +207,7 @@ static void OSDdraw(void) {
 		emuRectFill(x-2, y-2, x+4*strlen(osdText), y+6, 6); //outline
 		emuRectFill(x-1, y-1, x+4*strlen(osdText)-1, y+5, 0);
 		emuPrint(osdText, x, y, 7);
-	}
+	} return;
 }
 
 // It's basicly the pico8emu() function from Lemon's code
@@ -248,11 +253,8 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 
 			// Also if auto saving is on, we do the saving
 			if (emuAutoSave) {
-				gameState = gameState ? gameState : malloc(Celeste_P8_get_state_size());
-				if (gameState) {
-					Celeste_P8_save_state(gameState);
-					writeProgressSave();
-				}	
+				writeSave(emuAutoSaveFirst);
+				emuAutoSaveFirst = false;
 			}
 		} break;
 
@@ -407,11 +409,13 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 // Simple function that inits some vars
 // or resets them if that's what we're
 // trying to do :)
-void gameInit() {
+void gameInit(bool full) {
     memcpy(palette, defltPalette, sizeof(defltPalette));
 
-	Celeste_P8_set_rndseed(EADK::random());
-	Celeste_P8_init();
+	if (full) { Celeste_P8_set_rndseed(EADK::random()); }
+	Celeste_P8_init(full);
+	
+	return;
 }
 
 // Public function meant to be ran by the our main()
@@ -419,18 +423,15 @@ void gameInit() {
 void emuInit() {
 	Celeste_P8_set_call_func(emulator);
 
-	gameInit();
+	if (!emuAutoLoad || !slotValid(false)) { gameInit(true); }
+	else { gameInit(false); }
 
     return;
 }
 
 // Function to free any allocated memory on the heap
 // YES it is back because we have saving babyyyy
-void emuShutDown() {
-	if (gameState) { free(gameState); }
-
-	return;
-}
+void emuShutDown() { savesShutDown(); return; }
 
 // That's where we're handling the actual inputs
 // for the game and OSD (It's here to !)
@@ -440,11 +441,12 @@ void emuInput() {
 
     // Emulator input (functions such as pause etc)
     if (state.keyDown(Keyboard::Key::Backspace)
-        && !lastState.keyDown(Keyboard::Key::Backspace)) { pauseEmu = !pauseEmu; }
+        && !lastState.keyDown(Keyboard::Key::Backspace))
+		{ if (emuSettings) { emuSettings = false, emuPause = false; } else { emuPause = !emuPause; } }
 
 	if (state.keyDown(Keyboard::Key::Toolbox)
         && !lastState.keyDown(Keyboard::Key::Toolbox))
-		{ screenShake = !screenShake; OSDset("Screenshake: %s", screenShake ? "on" : "off"); }
+		{ if (emuSettings) { emuSettings = false, emuPause = false; } else { emuSettings = true, emuPause = true; } }
 	
 	static uint8_t resetTimer = 0;
 	if (state.keyDown(Keyboard::Key::XNT)) {
@@ -453,32 +455,52 @@ void emuInput() {
 			resetTimer = 0;
 			
 			OSDset("Reset");
-			pauseEmu = false;
+			emuPause = false;
 			emuSaveEnabled = false;
 			
-			gameInit();
+			gameInit(true);
 		}
 	} else resetTimer = 0;
 
 	if (state.keyDown(Keyboard::Key::Shift)
         && !lastState.keyDown(Keyboard::Key::Shift)) {
-		if (!emuSaveEnabled) { OSDset("No progress to save"); } else {
-			gameState = gameState ? gameState : malloc(Celeste_P8_get_state_size());
-			if (gameState) {
-				OSDset("Progress saved");
-				Celeste_P8_save_state(gameState);
-				writeProgressSave();
-			}
-		}
+		int status = writeSave(true);
+
+		if (status == SAVES_SUCCESS) { OSDset("Progress saved"); }
+		else if (status == SAVES_NOTHING_TO_DO) { OSDset("Nothing to save");}
+		else { OSDset("Couldn't save");}
 	}
 
 	if (state.keyDown(Keyboard::Key::Alpha)
         && !lastState.keyDown(Keyboard::Key::Alpha)) {
-		if (gameState) {
-			OSDset("Loaded saved progress");
-			if (pauseEmu) { pauseEmu = false; }
-			Celeste_P8_load_state(gameState);
-		} else { OSDset("No progress saved"); }
+		int status = loadSave(false);
+
+		if (status == SAVES_SUCCESS) { OSDset("Loaded save"); }
+		else if (status == SAVES_NOTHING_TO_DO) { OSDset("No save to load");}
+		else { OSDset("Couldn't load save"); }
+	}
+
+	if (state.keyDown(Keyboard::Key::Ans)
+        && !lastState.keyDown(Keyboard::Key::Ans)) {
+		int status = loadSave(true);
+
+		if (status == SAVES_SUCCESS) { OSDset("Loaded backed up save"); }
+		else if (status == SAVES_NOTHING_TO_DO) { OSDset("No backup save to load");}
+		else { OSDset("Couldn't load backed up save"); }
+	}
+
+    // Input on the settings page overlap
+	// With game inputs
+	if (emuSettings) {
+		
+	} else {
+		// Actual game input
+		if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
+		if (state.keyDown(Keyboard::Key::Right)) emuBtnState |= (1<<1);
+		if (state.keyDown(Keyboard::Key::Up))    emuBtnState |= (1<<2);
+		if (state.keyDown(Keyboard::Key::Down))  emuBtnState |= (1<<3);
+		if (state.keyDown(Keyboard::Key::Back)) emuBtnState |= (1<<4);
+		if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
 	}
 
 	#ifdef DEBUG_BUILD
@@ -488,13 +510,7 @@ void emuInput() {
 	}
 	#endif
 
-    // Actual game input
-    if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
-	if (state.keyDown(Keyboard::Key::Right)) emuBtnState |= (1<<1);
-	if (state.keyDown(Keyboard::Key::Up))    emuBtnState |= (1<<2);
-	if (state.keyDown(Keyboard::Key::Down))  emuBtnState |= (1<<3);
-	if (state.keyDown(Keyboard::Key::Back)) emuBtnState |= (1<<4);
-	if (state.keyDown(Keyboard::Key::OK)) emuBtnState |= (1<<5);
+	return;
 }
 
 void gameMain() {
@@ -503,18 +519,28 @@ void gameMain() {
 
 	emuInput();
 
-	if (pauseEmu) {
-		const int x = pico8Size / 2 - 3 * 4, y = 8;
+	if (emuPause) {
+		// Celeste_P8_draw(); // I still need to figure out how to stop ALL animations when pausing the update function (I already have for most just not implemented)
+		const int xP = pico8Size / 2 - 3 * 4, yP = 8;
 
-		emuRectFill(x - 1, y - 1, 6 * 4 + x + 1, 6 + y + 1, 6);
-		emuRectFill(x, y, 6 * 4 + x, 6 + y, 0);
-		emuPrint("paused", x + 1, y + 1, 7);
+		// We change to the default palette for the pause screen to be consistant
+		memcpy(palette, defltPalette, sizeof(defltPalette));
+		emuRectFill(xP - 1, yP - 1, 6 * 4 + xP + 1, 6 + yP + 1, 6);
+		emuRectFill(xP, yP, 6 * 4 + xP, 6 + yP, 0);
+		emuPrint("Paused", xP + 1, yP + 1, 7);
+
+		if (emuSettings) {
+			// const int xS = pico8Size / 2 - 3 * 4, yS = 8;
+			// To be writen
+		}
 	} else {
-
 		Celeste_P8_update();
 		Celeste_P8_draw();
 	}
-	OSDdraw();
+	// Same as for pause for the OSD
+	memcpy(palette, defltPalette, sizeof(defltPalette)); OSDdraw();
 
 	emuFbPresent();
+
+	return;
 }

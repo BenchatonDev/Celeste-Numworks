@@ -3,7 +3,7 @@
 #include "eadk/eadk.h"
 
 #include "textures.h"
-#include "extra.hpp"
+#include "saveHandler.hpp"
 #include "game/celeste.h"
 #include "game/tilemap.h"
 
@@ -25,11 +25,12 @@
 extern int pico8XOrgin;
 extern int pico8YOrgin;
 extern bool screenShake;
-extern bool pauseEmu;
+extern bool emuPause;
 extern bool emuSettings;
 extern bool emuAutoSave;
 extern bool emuAutoLoad;
-extern void *gameState;
+extern bool emuSaveEnabled;
+extern bool emuAutoSaveFirst;
 
 // I'm following Lemon's way
 // of handling the "emulator"'s
