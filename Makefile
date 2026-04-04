@@ -5,7 +5,7 @@ DEBUG_BUILD ?= 0
 
 SOURCES = $(addprefix src/,\
   main.cpp \
-  extra.cpp \
+  saveHandler.cpp \
   limiter.cpp \
   translation.cpp \
   game/celeste.cpp \
