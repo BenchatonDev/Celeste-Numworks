@@ -23,10 +23,9 @@ uint64_t frameStartTime  = 0;
 int main(void) {
     // Clearing the screen first
     Display::pushRectUniform(Screen::Rect, 0x000000);
-    emuInit();
 
-    Point location = Point(20, 20);
-    int read = loadProgressSave();
+    savesInit();
+    emuInit();
     
     while (running) { // You can always exit by double pressing home so \(°-°)/
         if (state.keyDown(Keyboard::Key::Home)) { running = false; }
