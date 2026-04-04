@@ -123,7 +123,7 @@ int writeSave(bool backupOldSave) {
     }
 
     // And this should write the new save state to file, again hopefully
-    Celeste_P8_save_state(slot1Pointer(fileData));
+    Celeste_P8_save_state((void *)slot1Pointer(fileData));
     fileHeader.slot1Valid = true;
 
     fileHeaderUpdate();
