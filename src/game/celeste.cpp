@@ -360,22 +360,24 @@ static void PRELUDE() {
 	PRELUDE_initparticles();
 }
 
-void Celeste_P8_init() { //identifiers beginning with underscores are reserved in C
+void Celeste_P8_init(bool full) { //identifiers beginning with underscores are reserved in C
 	if (!Celeste_P8_call) {
 		//fprintf(stderr, "Warning: Celeste_P8_call is NULL.. have you called Celeste_P8_set_call_func()?\n");
 	}
 
-	// CALCULATOR_SAVING
-	room = {.x=0,.y=0}, freeze = 0; // Because we don't saveStates on the calculator
-	shake = 0, will_restart = false, delay_restart = 0; // we need to set all the of
-	got_fruit[FRUIT_COUNT] = {false}, has_dashed = false; // the game's variables to
-	has_key = false, pause_player = false; // their initial values if
-	flash_bg = false, new_bg = false; // we want reset to work properly
-	// END OF CALCULATOR_SAVING
+	if (full) {
+		// CALCULATOR_SAVING
+		room = {.x=0,.y=0}, freeze = 0; // Because we don't saveStates on the calculator
+		shake = 0, will_restart = false, delay_restart = 0; // we need to set all the of
+		got_fruit[FRUIT_COUNT] = {false}, has_dashed = false; // the game's variables to
+		has_key = false, pause_player = false; // their initial values if
+		flash_bg = false, new_bg = false; // we want reset to work properly
+		// END OF CALCULATOR_SAVING
+
+		title_screen();
+	}
 
 	PRELUDE();
-
-	title_screen();
 }
 
 static void title_screen() {
