@@ -1,7 +1,5 @@
 #pragma once
 
-#define PLATFORM_DEVICE
-
 #include "translation.hpp"
 #include "game/celeste.h"
 
@@ -20,11 +18,12 @@ enum SAVES_EXIT_CODES {
 
 int savesInit();
 
+int savesShutDown();
+
 int fileHeaderUpdate();
 
-/*
-// Saving / loading function stuff ;)
-int loadProgressSave();
+bool slotValid(bool backupSlot);
 
-int writeProgressSave();
-*/
+int writeSave(bool backupOldSave);
+
+int loadSave(bool backupSlot);

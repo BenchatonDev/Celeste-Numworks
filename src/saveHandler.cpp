@@ -1,23 +1,15 @@
 #include "saveHandler.hpp"
 
-#ifdef PLATFORM_DEVICE
-
 // Save file handling area
 #define slotNumb 2
 #define saveName "CelesteP8.sav"
-#define saveSize (sizeof(saveHeader) + slotNumb * stateSize)
 #define stateSize Celeste_P8_get_state_size()
+#define saveSize (sizeof(saveHeader) + slotNumb * stateSize)
 
 // Was the save system initialized ?
 // If it wasn't (the init function failed)
 // Then none of the save functions will work
 bool saveSystemInitiliazed = false;
-
-// Save slot macros for readability
-enum SAVE_SLOTS {
-    SLOT_MAIN = 1,
-    SLOT_BACKUP = 2,
-};
 
 // That's the top part of my new save format
 // Instead of the raw game state I'll now store
@@ -50,6 +42,13 @@ saveHeader fileHeader = {
     false,
 };
 
+#ifdef PLATFORM_DEVICE
+// The game state to be loaded, it can be
+// Either from the backup slot or the main
+// Slot, it's simply a buffer to freed right
+// After the state is loaded so there is no diff
+void* gameState = NULL;
+
 // Common function for all our save file creation needs
 int saveFileCreate() {
     void* newFile = malloc(saveSize);
@@ -80,6 +79,7 @@ int savesInit() {
             emuAutoSaveFirst = !emuAutoSave;
 
             saveSystemInitiliazed = true;
+            if (emuAutoLoad) { loadSave(false); }
         } else {
             // The current save file isn't compatible
             // So we'll hapilly overwrite it, ofc I'll
@@ -92,55 +92,125 @@ int savesInit() {
     }
 }
 
+int savesShutDown() { if (gameState) { free(gameState); } saveSystemInitiliazed = false; return SAVES_SUCCESS;}
+
 int fileHeaderUpdate() {
-    if (saveSystemInitiliazed) {
-        size_t fileLen = 0;
-        const char* fileData = extapp_fileRead(saveName, &fileLen);
-
-        fileHeader.screenShake = screenShake;
-        fileHeader.saveAuto = emuAutoSave;
-        fileHeader.saveLoadAuto = emuAutoLoad;
-
-        memcpy((void*)fileData, &fileHeader, sizeof(fileHeader));
-        return SAVES_SUCCESS;
-    } else { return SAVES_WRITE_FAIL; }
-}
-
-/*
-int loadProgressSave() {
-    if (!extapp_fileExists(saveName)) { return SAVES_NOTHING_TO_DO; }
-
+    if (!saveSystemInitiliazed) { return SAVES_FAIL; }
+    
     size_t fileLen = 0;
     const char* fileData = extapp_fileRead(saveName, &fileLen);
-    void* saveData = (void*)fileData;
 
-    if (!saveData) { return SAVES_READ_FAIL; }
+    fileHeader.screenShake = screenShake;
+    fileHeader.saveAuto = emuAutoSave;
+    fileHeader.saveLoadAuto = emuAutoLoad;
 
-    gameState = malloc(stateSize);
-    memcpy(gameState, saveData, stateSize);
+    memcpy((void*)fileData, &fileHeader, sizeof(fileHeader));
     return SAVES_SUCCESS;
 }
 
-int writeProgressSave() {
-    if (!gameState) { return SAVES_NOTHING_TO_DO; }
+bool slotValid(bool backupSlot) {
+    return backupSlot ? fileHeader.slot2Valid : fileHeader.slot1Valid;
+}
 
-    if (extapp_fileExists(saveName)) { extapp_fileErase(saveName); }
+#define slot1Pointer(filePointer) filePointer + sizeof(fileHeader)
 
-    const char* fileData = (char*)gameState;
+int writeSave(bool backupOldSave) {
+    if (!saveSystemInitiliazed) { return SAVES_FAIL; }
+    if (!emuSaveEnabled) { return SAVES_NOTHING_TO_DO; }
 
-    if (extapp_fileWrite(saveName, fileData, stateSize))
-    { return SAVES_SUCCESS; } else { return SAVES_WRITE_FAIL; }
-}*/
+    gameState = malloc(stateSize);
+    if (!gameState) { return SAVES_FAIL; }
+
+    size_t fileLen = 0;
+    const char* fileData = extapp_fileRead(saveName, &fileLen);
+
+    if (backupOldSave) {
+        // This SHOULD copy the data from the main slot to the backup one, hopefully
+        memcpy((void*)(slot1Pointer(fileData) + stateSize), (void*)(slot1Pointer(fileData)), stateSize);
+        fileHeader.slot2Valid = true;
+    }
+
+    // And this should write the new save state to file, again hopefully
+    Celeste_P8_save_state(gameState);
+    memcpy((void*)(slot1Pointer(fileData)), gameState, stateSize);
+    fileHeader.slot1Valid = true;
+
+    free(gameState);
+    fileHeaderUpdate();
+    return SAVES_SUCCESS;
+}
+
+int loadSave(bool backupSlot) {
+    if (!saveSystemInitiliazed) { return SAVES_FAIL; }
+
+    gameState = malloc(stateSize);
+    if (!gameState) { return SAVES_FAIL; }
+
+    size_t fileLen = 0;
+    const char* fileData = extapp_fileRead(saveName, &fileLen);
+
+    if (backupSlot) {
+        if ( !fileHeader.slot2Valid ) { free(gameState); return SAVES_NOTHING_TO_DO; } 
+        
+        memcpy(gameState, (void*)(slot1Pointer(fileData) + stateSize), stateSize);
+        Celeste_P8_load_state(gameState);
+    } else {
+        if ( !fileHeader.slot1Valid ) { free(gameState); return SAVES_NOTHING_TO_DO; }
+        
+        memcpy(gameState, (void*)(slot1Pointer(fileData)), stateSize);
+        Celeste_P8_load_state(gameState);
+    }
+    
+    free(gameState);
+    return SAVES_SUCCESS;
+}
+
+#undef slot1Pointer
 
 #else
 
-/*
-int loadProgressSave() {
-    return SAVES_NOTHING_TO_DO;
+// Two buffers for the saves since memory is far
+// from a problem at our scale for the simulators
+void* gameState = NULL;
+void* backupState = NULL;
+
+int savesInit() { saveSystemInitiliazed = true; return SAVES_SUCCESS; }
+
+int savesShutDown() { free(gameState); free(backupState); saveSystemInitiliazed = false; return SAVES_SUCCESS; }
+
+
+int writeSave(bool backupOldSave) {
+    if (!saveSystemInitiliazed) { return SAVES_FAIL; }
+    if (!emuSaveEnabled) { return SAVES_NOTHING_TO_DO; }
+
+    // We still need to check if those exist :/
+    gameState = gameState ? gameState : malloc(stateSize);
+    backupState = backupState ? backupState : malloc(stateSize);
+    if (!gameState) { return SAVES_WRITE_FAIL; }
+
+    // Simple enought !
+    if (backupOldSave && fileHeader.slot1Valid == true) {
+        if (!backupState) { return SAVES_WRITE_FAIL; } memcpy(backupState, gameState, stateSize);
+        fileHeader.slot2Valid = true; }
+    
+    Celeste_P8_save_state(gameState);
+    fileHeader.slot1Valid = true;
+
+    return SAVES_SUCCESS;
 }
 
-int writeProgressSave() {
-    return SAVES_NOTHING_TO_DO;
-}*/
+int loadSave(bool backupSlot) {
+    if (!saveSystemInitiliazed) { return SAVES_FAIL; }
+
+    // Still need to know if they exist :/
+    if (!gameState) { return SAVES_FAIL; }
+
+    // Even Simpler !
+    if (backupSlot) { if (!backupState) { return SAVES_FAIL; }
+        if ( !fileHeader.slot2Valid ) { return SAVES_NOTHING_TO_DO; } Celeste_P8_load_state(backupState); }
+    else { if ( !fileHeader.slot1Valid ) { return SAVES_NOTHING_TO_DO; } Celeste_P8_load_state(gameState); }
+   
+    return SAVES_SUCCESS;
+}
 
 #endif
