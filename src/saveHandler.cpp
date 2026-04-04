@@ -76,7 +76,6 @@ int savesInit() {
             screenShake = fileHeader.screenShake;
             emuAutoSave = fileHeader.saveAuto;
             emuAutoLoad = fileHeader.saveLoadAuto;
-            emuAutoSaveFirst = !emuAutoSave;
 
             saveSystemInitiliazed = true;
             if (emuAutoLoad) { loadSave(false); }
