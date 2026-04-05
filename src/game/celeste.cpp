@@ -297,9 +297,9 @@ static bool flash_bg = false;
 
 //these are originally implicit globals defined in title_screen()
 static bool new_bg = false;
-static int frames, last_drawn_frame, seconds;
-static short minutes; //this variable can overflow in normal gameplay (after +500 hours)
-static int deaths, max_djump;
+static int frames, last_drawn_frame, max_djump;
+short minutes; // To be globaly available they've been moved to the
+int deaths, seconds, score; // celeste.h header and thus can't be static anymore
 static bool start_game;
 static int start_game_flash;
 
@@ -517,7 +517,6 @@ typedef struct {
         //NOTE: The Big Chest particle array object has been moved outside of Obj to optimize memory
         int particle_count;
         //flag
-        int score;
         bool show;
 } OBJ;
 
@@ -1460,11 +1459,11 @@ static void ORB_draw(OBJ* this) {
 	//tile=118,
 static void FLAG_init(OBJ* this) {
 	this->x+=5;
-	this->score=0;
+	score=0;
 	this->show=false;
 	for (int i=0; i < FRUIT_COUNT; i++) {
 		if (got_fruit[i]) {
-			this->score+=1;
+			score+=1;
 		}
 	}
 }
@@ -1477,7 +1476,7 @@ static void FLAG_draw(OBJ* this) {
 		P8spr(26,55,6, 1,1,false,false);
 		{
 			char str[16];
-			snprintf(str, sizeof(str), "x%i", this->score);
+			snprintf(str, sizeof(str), "x%i", score);
 			P8print(str,64,9,7);
 		}
 		draw_time(49,16);

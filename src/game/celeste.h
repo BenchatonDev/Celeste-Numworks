@@ -19,6 +19,10 @@ typedef enum {
 typedef _Bool Celeste_P8_bool_t;
 typedef int (*Celeste_P8_cb_func_t) (CELESTE_P8_CALLBACK_TYPE calltype, ...);
 
+// Statistics on the current game
+extern short minutes; //this variable can overflow in normal gameplay (after +500 hours)
+extern int deaths, seconds, score;
+
 extern void Celeste_P8_set_call_func(Celeste_P8_cb_func_t func);
 extern void Celeste_P8_set_rndseed(unsigned seed);
 extern void Celeste_P8_init(bool full);
