@@ -172,8 +172,8 @@ static inline void P8spr(int sprite, int x, int y, int cols, int rows, bool flip
 static inline bool P8btn(int b) {
 	return Celeste_P8_call(CELESTE_P8_BTN, b);
 }
-static inline void P8levelchange() {
-	Celeste_P8_call(CELESTE_P8_LEVELCHANGE);
+static inline void P8levelchange(int levelindex) {
+	Celeste_P8_call(CELESTE_P8_LEVELCHANGE, levelindex);
 }
 static inline void P8pal(int a, int b) {
 	Celeste_P8_call(CELESTE_P8_PAL, a, b);
@@ -1162,6 +1162,7 @@ static void FRUIT_update(OBJ* this) {
 		got_fruit[level_index()] = true;
 		init_object(OBJ_LIFEUP,this->x,this->y);
 		destroy_object(this);
+		score++;
 		return; //LEMON: added return to not modify dead object
 	}
 	this->off+=1;
@@ -1201,7 +1202,7 @@ static void FLY_FRUIT_update(OBJ* this) {
 		init_object(OBJ_LIFEUP,this->x,this->y);
 		do_destroy_object = true;
 	}
-	if (do_destroy_object) destroy_object(this);
+	if (do_destroy_object) { destroy_object(this); score++;};
 }
 static void FLY_FRUIT_draw(OBJ* this) {
 	float off=0;
@@ -1459,13 +1460,7 @@ static void ORB_draw(OBJ* this) {
 	//tile=118,
 static void FLAG_init(OBJ* this) {
 	this->x+=5;
-	score=0;
 	this->show=false;
-	for (int i=0; i < FRUIT_COUNT; i++) {
-		if (got_fruit[i]) {
-			score+=1;
-		}
-	}
 }
 	
 static void FLAG_draw(OBJ* this) {
@@ -1669,7 +1664,7 @@ static void load_room(int x, int y) {
 		// This callback allows us to do shit when
 		// A game room that isn't the main menu like
 		// Not allowing saving on the main menu or Auto saves
-		P8levelchange();
+		P8levelchange(level_index());
 		// END OF CALCULATOR_SAVING
 	}
 }
@@ -2040,6 +2035,9 @@ void Celeste_P8_load_state(const void* st_) {
 	frames = roomStartFrames, seconds = roomStartSeconds;
 	minutes = roomStartMinutes, last_drawn_frame = frames - 1;
 	memcpy(got_fruit, roomStartFruit, sizeof(roomStartFruit));
+
+	score = 0;
+	for (int i = 0; i < FRUIT_COUNT; i++) { if (got_fruit[i]) { score++; } }
 	// END OF CALCULATOR_SAVING
 }
 
