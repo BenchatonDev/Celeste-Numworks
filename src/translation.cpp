@@ -434,7 +434,7 @@ void emuInit() {
 void emuShutDown() { savesShutDown(); return; }
 
 // That's where we're handling the actual inputs
-// for the game and OSD (It's here to !)
+// for the game and OSD (It's here too !)
 void emuInput() {
     lastState = state;
     state = Keyboard::scan();
@@ -475,7 +475,7 @@ void emuInput() {
         && !lastState.keyDown(Keyboard::Key::Alpha)) {
 		int status = loadSave(false);
 
-		if (status == SAVES_SUCCESS) { OSDset("Loaded save"); }
+		if (status == SAVES_SUCCESS) { OSDset("Loaded save"); emuPause = false, emuSettings = false; }
 		else if (status == SAVES_NOTHING_TO_DO) { OSDset("No save to load");}
 		else { OSDset("Couldn't load save"); }
 	}
@@ -484,7 +484,7 @@ void emuInput() {
         && !lastState.keyDown(Keyboard::Key::Ans)) {
 		int status = loadSave(true);
 
-		if (status == SAVES_SUCCESS) { OSDset("Loaded backed up save"); }
+		if (status == SAVES_SUCCESS) { OSDset("Loaded backed up save"); emuPause = false, emuSettings = false; }
 		else if (status == SAVES_NOTHING_TO_DO) { OSDset("No backup save to load");}
 		else { OSDset("Couldn't load backed up save"); }
 	}
@@ -520,7 +520,7 @@ void gameMain() {
 	emuInput();
 
 	if (emuPause) {
-		// Celeste_P8_draw(); // I still need to figure out how to stop ALL animations when pausing the update function (I already have for most just not implemented)
+		Celeste_P8_draw();
 		const int xP = pico8Size / 2 - 3 * 4, yP = 8;
 
 		// We change to the default palette for the pause screen to be consistant
