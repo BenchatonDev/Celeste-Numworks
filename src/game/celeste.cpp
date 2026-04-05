@@ -297,7 +297,7 @@ static bool flash_bg = false;
 
 //these are originally implicit globals defined in title_screen()
 static bool new_bg = false;
-static int frames, seconds;
+static int frames, last_drawn_frame, seconds;
 static short minutes; //this variable can overflow in normal gameplay (after +500 hours)
 static int deaths, max_djump;
 static bool start_game;
@@ -338,11 +338,11 @@ enum {
 	X(KEY,           8,     N,        Y,          N,             true)\
 	X(CHEST,        20,     Y,        Y,          N,             true)\
 	X(LIFEUP,       -1,     Y,        Y,          Y,            false)\
-	X(MESSAGE,      86,     N,        N,          Y,            false)\
-	X(BIG_CHEST,    96,     Y,        N,          Y,            false)\
-	X(ORB,          -1,     Y,        N,          Y,            false)\
+	X(MESSAGE,      86,     N,        Y,          Y,            false)\
+	X(BIG_CHEST,    96,     Y,        Y,          Y,            false)\
+	X(ORB,          -1,     Y,        Y,          Y,            false)\
 	X(FLAG,        118,     Y,        N,          Y,            false)\
-	X(ROOM_TITLE,   -1,     Y,        N,          Y,            false)
+	X(ROOM_TITLE,   -1,     Y,        Y,          Y,            false)
 
 typedef enum {
 	#define X(t,...) OBJ_##t,
@@ -388,6 +388,7 @@ static void title_screen() {
 	max_djump=1;
 	start_game=false;
 	start_game_flash=0;
+	last_drawn_frame=0;
    
 	load_room(7,3);
 }
@@ -397,6 +398,7 @@ static void begin_game() {
 	seconds=0;
 	minutes=0;
 	start_game=false;
+	last_drawn_frame=0;
 	load_room(0,0);
 }
 
@@ -561,7 +563,8 @@ static OBJ objects[MAX_OBJECTS] = {{.active = false}};
 
 static void create_hair(OBJ* obj);
 static void set_hair_color(int c);
-static void draw_hair(OBJ* obj, int facing);
+static void update_hair(OBJ* obj, int facing);
+static void draw_hair(OBJ* obj);
 static void unset_hair_color(void);
 static void kill_player(OBJ* obj);
 static void break_fall_floor(OBJ* obj);
@@ -885,6 +888,7 @@ static void PLAYER_update(OBJ* this) {
    
 	// was on the ground
 	this->was_on_ground=on_ground;
+	update_hair(this, this->flip_x ? -1 : 1);
 }
 static void PLAYER_draw(OBJ* this) {
 	// clamp in screen
@@ -894,7 +898,7 @@ static void PLAYER_draw(OBJ* this) {
 	}
    
 	set_hair_color(this->djump);
-	draw_hair(this,this->flip_x ? -1 : 1);
+	draw_hair(this);
 	P8spr(this->spr,this->x,this->y,1,1,this->flip_x,this->flip_y);
 	unset_hair_color();
 }
@@ -910,7 +914,7 @@ static void set_hair_color(int djump) {
 	P8pal(8,(djump==1 ? 8 : (djump==2 ?(7+P8flr(((int)(((float)frames)/3.0))%2)*4) : 12)));
 }
 
-static void draw_hair(OBJ* obj, int facing) {
+static void update_hair(OBJ* obj, int facing) {
 	float last_x=obj->x+4-facing*2;
 	float last_y=obj->y+(P8btn(k_down) ? 4 : 3);
 	HAIR* h;
@@ -919,9 +923,17 @@ static void draw_hair(OBJ* obj, int facing) {
 		h = &obj->hair[i++];
 		h->x+=(last_x-h->x)/1.5;
 		h->y+=(last_y+0.5-h->y)/1.5;
-		P8circfill(h->x,h->y,h->size,8);
 		last_x=h->x;
 		last_y=h->y;
+	} while (!h->isLast);
+}
+
+static void draw_hair(OBJ* obj) {
+	HAIR* h;
+	int i = 0;
+	do {
+		h = &obj->hair[i++];
+		P8circfill(h->x,h->y,h->size,8);
 	} while (!h->isLast);
 }
 
@@ -976,7 +988,7 @@ static void PLAYER_SPAWN_update(OBJ* this) {
 }
 static void PLAYER_SPAWN_draw (OBJ* this) {
 	set_hair_color(max_djump);
-	draw_hair(this,1);
+	draw_hair(this);
 	P8spr(this->spr,this->x,this->y,1,1,this->flip_x,this->flip_y);
 	unset_hair_color();
 }
@@ -1218,14 +1230,14 @@ static void LIFEUP_init(OBJ* this) {
 }
 static void LIFEUP_update(OBJ* this) {
 	this->duration-=1;
+	this->flash+=0.5;
+
 	if (this->duration<= 0) {
 		destroy_object(this);
 	}
 }
 static void LIFEUP_draw(OBJ* this) {
-	this->flash+=0.5;
-
-	P8print("1000",this->x-2,this->y,7+((int)this->flash)%2);
+	if (frames != last_drawn_frame) { P8print("1000",this->x-2,this->y,7+((int)this->flash)%2); }
 }
 
 //fake_wall
@@ -1318,7 +1330,7 @@ static void PLATFORM_draw(OBJ* this) {
 //message
 	//tile=86,
 	//last=0,
-static void MESSAGE_draw(OBJ* this) {
+static void MESSAGE_update(OBJ* this) {
 	this->text="-- celeste mountain --#this memorial to those# perished on the climb";
 	if (OBJ_check(this, OBJ_PLAYER,4,0)) {
 		if (this->index<strlen(this->text)) {
@@ -1327,6 +1339,14 @@ static void MESSAGE_draw(OBJ* this) {
 				this->last+=1;
 			}
 		}
+	} else {
+		this->index=0;
+		this->last=0;
+	}
+}
+
+static void MESSAGE_draw(OBJ* this) {
+	if (OBJ_check(this, OBJ_PLAYER,4,0) && frames != last_drawn_frame) {
 		this->off2.x=8;
 		this->off2.y=96;
 		for (int i=0; i<this->index; i++) {
@@ -1341,9 +1361,6 @@ static void MESSAGE_draw(OBJ* this) {
 				this->off2.y+=7;
 			}
 		}
-	} else {
-		this->index=0;
-		this->last=0;
 	}
 }
 
@@ -1353,7 +1370,8 @@ static void BIG_CHEST_init(OBJ* this) {
 	this->state=0;
 	this->hitbox.w=16;
 }
-static void BIG_CHEST_draw(OBJ* this) {
+
+static void BIG_CHEST_update(OBJ* this) {
 	if (this->state==0) {
 		OBJ* hit=OBJ_collide(this, OBJ_PLAYER,0,8);
 		if (hit!=NULL && OBJ_is_solid(hit, 0,1)) {
@@ -1366,8 +1384,6 @@ static void BIG_CHEST_draw(OBJ* this) {
 			this->timer=60;
 			this->particle_count = 0;
 		}
-		P8spr(96,this->x,this->y,   1,1,false,false);
-		P8spr(97,this->x+8,this->y,  1,1,false,false);
 	} else if (this->state==1) {
 		this->timer-=1;
 		shake=5;
@@ -1391,6 +1407,17 @@ static void BIG_CHEST_draw(OBJ* this) {
 		for (int i = 0; i < this->particle_count; i++) {
 			PARTICLE* p = &big_chest_particles[i];
 			p->y+=p->spd;
+		}
+	}
+}
+
+static void BIG_CHEST_draw(OBJ* this) {
+	if (this->state==0) {
+		P8spr(96,this->x,this->y,   1,1,false,false);
+		P8spr(97,this->x+8,this->y,  1,1,false,false);
+	} else if (this->state==1) {
+		for (int i = 0; i < this->particle_count; i++) {
+			PARTICLE* p = &big_chest_particles[i];
 			P8line(this->x+p->x,this->y+8-p->y,this->x+p->x,P8min(this->y+8-p->y+p->h,this->y+8),7);
 		}
 	}
@@ -1404,7 +1431,8 @@ static void ORB_init(OBJ* this) {
 	this->solids=false;
 	this->particle_count = 0;
 }
-static void ORB_draw(OBJ* this) {
+
+static void ORB_update(OBJ* this) {
 	this->spd.y=appr(this->spd.y,0,0.5);
 	OBJ* hit=OBJ_collide(this, OBJ_PLAYER,0,0);
 	bool destroy_self = false;
@@ -1415,13 +1443,17 @@ static void ORB_draw(OBJ* this) {
 		max_djump=2;
 		hit->djump=2;
 	}
-   
+
+	if (destroy_self) destroy_object(this);
+}
+
+static void ORB_draw(OBJ* this) {
 	P8spr(102,this->x,this->y,  1,1,false,false);
+
 	float off=(float)frames/30.f;
 	for (float i=0; i <= 7; i+=1) {
 		P8circfill(this->x+4+P8cos(off+i/8.f)*8,this->y+4+P8sin(off+i/8.f)*8,1,7);
 	}
-	if (destroy_self) destroy_object(this);
 }
 
 //flag
@@ -1436,10 +1468,11 @@ static void FLAG_init(OBJ* this) {
 		}
 	}
 }
+	
 static void FLAG_draw(OBJ* this) {
 	this->spr=118+P8modulo(((float)frames/5.f), 3);
 	P8spr(this->spr,this->x,this->y, 1,1,false,false);
-	if (this->show) {
+	if (this->show && frames != last_drawn_frame) {
 		P8rectfill(32,2,96,31,0);
 		P8spr(26,55,6, 1,1,false,false);
 		{
@@ -1462,11 +1495,14 @@ static void FLAG_draw(OBJ* this) {
 static void ROOM_TITLE_init(OBJ* this) {
 	this->delay=5;
 }
-static void ROOM_TITLE_draw(OBJ* this) {
+
+static void ROOM_TITLE_update(OBJ* this) {
 	this->delay-=1;
-	if (this->delay<-30) {
-		destroy_object(this);
-	} else if (this->delay<0) {
+	if (this->delay<-30) { destroy_object(this); }
+}
+
+static void ROOM_TITLE_draw(OBJ* this) {
+	if (this->delay<0 && frames != last_drawn_frame) {
 		P8rectfill(24,58,104,70,0);
 		//rect(26,64-10,102,64+10,7)
 		//print("//-",31,64-2,13)
@@ -1873,7 +1909,7 @@ void Celeste_P8_draw() {
 			P8rectfill(0,0,diff,128,0);
 			P8rectfill(128-diff,0,128,128,0);
 		}
-	}
+	} last_drawn_frame = frames;
 }
 
 static void draw_object(OBJ* obj) {
@@ -2003,7 +2039,7 @@ void Celeste_P8_load_state(const void* st_) {
 	// Set time back to what it was the last
 	// Time the room we saved at was loaded
 	frames = roomStartFrames, seconds = roomStartSeconds;
-	minutes = roomStartMinutes;
+	minutes = roomStartMinutes, last_drawn_frame = frames - 1;
 	memcpy(got_fruit, roomStartFruit, sizeof(roomStartFruit));
 	// END OF CALCULATOR_SAVING
 }
