@@ -441,12 +441,16 @@ void emuInput() {
 
     // Emulator input (functions such as pause etc)
     if (state.keyDown(Keyboard::Key::Backspace)
-        && !lastState.keyDown(Keyboard::Key::Backspace))
-		{ if (emuSettings) { emuSettings = false, emuPause = false; } else { emuPause = !emuPause; } }
+        && !lastState.keyDown(Keyboard::Key::Backspace)) {
+		if (emuSettings) { emuSettings = false, emuPause = false, settingIndex = 0; }
+		else { emuPause = !emuPause; }
+	}
 
 	if (state.keyDown(Keyboard::Key::Toolbox)
-        && !lastState.keyDown(Keyboard::Key::Toolbox))
-		{ if (emuSettings) { emuSettings = false, emuPause = false; } else { emuSettings = true, emuPause = true; } }
+        && !lastState.keyDown(Keyboard::Key::Toolbox)) {
+		if (emuSettings) { emuSettings = false, emuPause = false; settingIndex = 0; }
+		else { emuSettings = true, emuPause = true; }
+	}
 	
 	static uint8_t resetTimer = 0;
 	if (state.keyDown(Keyboard::Key::XNT)) {
@@ -456,6 +460,7 @@ void emuInput() {
 			
 			OSDset("Reset");
 			emuPause = false;
+			emuSettings = false;
 			emuSaveEnabled = false;
 			
 			gameInit(true);
@@ -490,9 +495,31 @@ void emuInput() {
 	}
 
     // Input on the settings page overlap
-	// With game inputs
+	// With game inputs, that's why its here
 	if (emuSettings) {
-		
+				if (state.keyDown(Keyboard::Key::Up)
+        && !lastState.keyDown(Keyboard::Key::Up)) { settingIndex = settingIndex == 0 ? 0 : settingIndex - 1; }
+
+		if (state.keyDown(Keyboard::Key::Down)
+        && !lastState.keyDown(Keyboard::Key::Down)) { settingIndex = settingIndex == 2 ? 2 : settingIndex + 1; }
+
+		if (state.keyDown(Keyboard::Key::OK)
+        && !lastState.keyDown(Keyboard::Key::OK)) {
+			switch (settingIndex) {
+
+			case 0:
+				screenShake = !screenShake; break;
+			
+			case 1:
+				emuAutoSave = !emuAutoSave; break;
+
+			case 2:
+				emuAutoLoad = !emuAutoLoad; break;
+			
+			default:
+				settingIndex = 0; break;
+			} fileHeaderUpdate();
+		}
 	} else {
 		// Actual game input
 		if (state.keyDown(Keyboard::Key::Left))  emuBtnState |= (1<<0);
@@ -530,8 +557,69 @@ void gameMain() {
 		emuPrint("Paused", xP + 1, yP + 1, 7);
 
 		if (emuSettings) {
-			// const int xS = pico8Size / 2 - 3 * 4, yS = 8;
-			// To be writen
+			const int xS = pico8Size / 2 - 9 * 4, yS = pico8Size / 2 - (37 - 4);
+			char str[20];
+			
+			// Settings background first
+			emuRectFill(xS - 1, yS - 1, 18 * 4 + xS + 1, 74 + yS + 1, 6);
+			emuRectFill(xS, yS, 18 * 4 + xS, 74 + yS, 0);
+			
+			// Statistics part of the settings
+			snprintf(str, sizeof(str), "Statistics:");
+			emuPrint(str, xS + (72 - (4 * (strlen(str) - 1))) / 2, yS + 2, 7);
+			emuRectFill(xS + (72 - (4 * (strlen(str)))) / 2, yS + 8, xS + (4 * (strlen(str) - 1)) + (strlen(str) + 8), yS + 8, 6);
+
+			// Strawbery counter
+			emuSprtRender(26, xS + 6, yS + 13, false, false, mainSprtSheet, -1);
+			snprintf(str, sizeof(str), ": %i", score);
+			emuPrint(str, xS + 6 + 8, yS + 13 + 2, 7);
+
+			// Death Counter
+			const char* suffixes[] = {"", "K", "M", "B"};
+			int suffix = 0, displayDeaths = deaths;
+
+			// For each 1000s we change the suffix to not print outside
+			// Of the UI, just in case your bad enough to reach the 1000s
+			// Of deaths, I dare you to even try reaching the max, really >:)
+			while (displayDeaths >= 1000 && suffix < 3) { displayDeaths /= 1000; suffix++; }
+
+			emuSprtRender(17, xS + 72 - (4 * (strlen(str) + 1) + 9), yS + 12, false, false, mainSprtSheet, -1);
+			snprintf(str, sizeof(str), ": %i%s", displayDeaths, suffixes[suffix]);
+			emuPrint(str, xS + 72 - (4 * (strlen(str) + 1)), yS + 13 + 2, 7);
+
+			// Time display
+			snprintf(str, sizeof(str), "Time: %.2i:%.2i:%.2i", minutes/60, minutes%60, seconds);
+			emuPrint(str, xS + (72 - (4 * (strlen(str)))) / 2, yS + 26, 7);
+
+			// Stettings part of the settings (that sounds so dumb)
+			snprintf(str, sizeof(str), "Stettings:");
+			emuPrint(str, xS + (72 - (4 * (strlen(str) - 1))) / 2, yS + 35, 7);
+			emuRectFill(xS + (72 - (4 * (strlen(str)))) / 2, yS + 41, xS + (4 * (strlen(str) - 1)) + (strlen(str) + 11), yS + 41, 6);
+
+			// Text color depends on if we're overing over
+			// The setting or not, it's the only indicator
+			uint8_t textColor;
+
+			// Screen Shake
+			textColor = settingIndex == 0 ? 12 : 7;
+			snprintf(str, sizeof(str), "Sreen shake:");
+			emuPrint(str, xS + 6, yS + 47, textColor);
+			snprintf(str, sizeof(str), screenShake ? " On" : "Off");
+			emuPrint(str, xS + 72 - (13 + strlen(str)), yS + 47, textColor);
+
+			// Auto saving
+			textColor = settingIndex == 1 ? 12 : 7;
+			snprintf(str, sizeof(str), "Auto save:");
+			emuPrint(str, xS + 6, yS + 57, textColor);
+			snprintf(str, sizeof(str), emuAutoSave ? " On" : "Off");
+			emuPrint(str, xS + 72 - (13 + strlen(str)), yS + 57, textColor);
+
+			// Auto save loading
+			textColor = settingIndex == 2 ? 12 : 7;
+			snprintf(str, sizeof(str), "Auto load:");
+			emuPrint(str, xS + 6, yS + 67, textColor);
+			snprintf(str, sizeof(str), emuAutoLoad ? " On" : "Off");
+			emuPrint(str, xS + 72 - (13 + strlen(str)), yS + 67, textColor);
 		}
 	} else {
 		Celeste_P8_update();
