@@ -54,6 +54,7 @@ int saveFileCreate() {
     // To the temporary buffer we use to create the file
     memcpy(newFile, &fileHeader, sizeof(fileHeader));
     bool fileExist = extapp_fileWrite(saveName, (const char*)newFile, saveSize);
+     if (!extapp_fileExists(saveName)) { return SAVES_WRITE_FAIL; };
     free(newFile);
 
     return fileExist ? SAVES_SUCCESS : SAVES_WRITE_FAIL;
