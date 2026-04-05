@@ -385,6 +385,7 @@ static void title_screen() {
 		got_fruit[i] = false;
 	frames=0;
 	deaths=0;
+	score=0;
 	max_djump=1;
 	start_game=false;
 	start_game_flash=0;
