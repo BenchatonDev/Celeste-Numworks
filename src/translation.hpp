@@ -31,6 +31,7 @@ extern bool emuAutoSave;
 extern bool emuAutoLoad;
 extern bool emuSaveEnabled;
 extern bool emuAutoSaveFirst;
+extern bool emuSaveJustLoaded;
 
 // I'm following Lemon's way
 // of handling the "emulator"'s
