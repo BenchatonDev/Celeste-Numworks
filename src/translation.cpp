@@ -15,6 +15,7 @@ bool emuAutoSave = false;
 bool emuAutoLoad = false;
 bool emuSaveEnabled = false;
 bool emuAutoSaveFirst = true;
+bool emuSaveJustLoaded = false;
 uint16_t emuBtnState = 0;
 uint16_t lastEmuBtnState = 0;
 
@@ -250,12 +251,13 @@ int emulator(CELESTE_P8_CALLBACK_TYPE call, ...) {
 			// We can let the player save, this will help
 			// Those with slippery hands
 			emuSaveEnabled = true;
+			int levelIndex = INT_ARG();
 
-			// Also if auto saving is on, we do the saving
-			if (emuAutoSave) {
+			// Also if auto saving is on, we're not at the end of the game, we do the saving
+			if (emuAutoSave && levelIndex != 30 && !emuSaveJustLoaded) {
 				writeSave(emuAutoSaveFirst);
 				emuAutoSaveFirst = false;
-			}
+			} emuSaveJustLoaded = false;
 		} break;
 
 		case CELESTE_P8_BTN: { //btn(b)
@@ -480,7 +482,7 @@ void emuInput() {
         && !lastState.keyDown(Keyboard::Key::Alpha)) {
 		int status = loadSave(false);
 
-		if (status == SAVES_SUCCESS) { OSDset("Loaded save"); emuPause = false, emuSettings = false; }
+		if (status == SAVES_SUCCESS) { OSDset("Loaded save"); emuPause = false, emuSettings = false, emuSaveJustLoaded = true; }
 		else if (status == SAVES_NOTHING_TO_DO) { OSDset("No save to load");}
 		else { OSDset("Couldn't load save"); }
 	}
@@ -489,7 +491,7 @@ void emuInput() {
         && !lastState.keyDown(Keyboard::Key::Ans)) {
 		int status = loadSave(true);
 
-		if (status == SAVES_SUCCESS) { OSDset("Loaded backed up save"); emuPause = false, emuSettings = false; }
+		if (status == SAVES_SUCCESS) { OSDset("Loaded backed up save"); emuPause = false, emuSettings = false, emuSaveJustLoaded = true; }
 		else if (status == SAVES_NOTHING_TO_DO) { OSDset("No backup save to load");}
 		else { OSDset("Couldn't load backed up save"); }
 	}
@@ -497,7 +499,7 @@ void emuInput() {
     // Input on the settings page overlap
 	// With game inputs, that's why its here
 	if (emuSettings) {
-				if (state.keyDown(Keyboard::Key::Up)
+		if (state.keyDown(Keyboard::Key::Up)
         && !lastState.keyDown(Keyboard::Key::Up)) { settingIndex = settingIndex == 0 ? 0 : settingIndex - 1; }
 
 		if (state.keyDown(Keyboard::Key::Down)
