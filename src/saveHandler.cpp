@@ -54,15 +54,17 @@ int saveFileCreate() {
     // To the temporary buffer we use to create the file
     memcpy(newFile, &fileHeader, sizeof(fileHeader));
     bool fileExist = extapp_fileWrite(saveName, (const char*)newFile, saveSize);
-    if (!extapp_fileExists(saveName)) { return SAVES_WRITE_FAIL; };
     free(newFile);
 
     return fileExist ? SAVES_SUCCESS : SAVES_WRITE_FAIL;
 }
 
 int savesInit() {
-    if (!extapp_fileExists(saveName)) { return saveFileCreate(); }
-    else {
+    if (!extapp_fileExists(saveName)) {
+        saveSystemInitiliazed = !((bool)saveFileCreate());
+        
+        return saveSystemInitiliazed ? SAVES_SUCCESS : SAVES_FAIL;
+    } else {
         size_t fileLen = 0;
         const char* fileData = extapp_fileRead(saveName, &fileLen);
 
@@ -81,7 +83,7 @@ int savesInit() {
             // So we'll hapilly overwrite it, ofc I'll
             // Tell you in the release text :)
             extapp_fileErase(saveName);
-            saveSystemInitiliazed = saveFileCreate() == SAVES_SUCCESS ? true : false;
+            saveSystemInitiliazed = !((bool)saveFileCreate());
         }
 
         return saveSystemInitiliazed ? SAVES_SUCCESS : SAVES_FAIL;
