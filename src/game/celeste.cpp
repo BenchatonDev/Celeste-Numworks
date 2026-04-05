@@ -1654,6 +1654,32 @@ void Celeste_P8_update() {
 	// cancel if (freeze
 	if (freeze>0) { freeze-=1; return; }
 
+	// particles
+	for (int i = 0; i <= 24; i++) {
+		PARTICLE* p = &particles[i];
+		p->x += p->spd;
+		p->y += P8sin(p->off);
+		p->off+= P8min(0.05,p->spd/32);
+		if (p->x>128+4) { 
+			p->x=-4;
+			p->y=P8rnd(128);
+		}
+		p++;
+	}
+   
+	// dead particles
+	for (int i = 0; i <= 7; i++) {
+		PARTICLE* p = &dead_particles[i];
+		if (p->active) {
+			p->x += p->spd2.x;
+			p->y += p->spd2.y;
+			p->t -=1;
+			if (p->t <= 0) { p->active = false; }
+		}
+
+		p++;
+	}
+
 	// screenshake
 	if (shake>0) {
 		shake-=1;
@@ -1713,6 +1739,15 @@ void Celeste_P8_update() {
 				begin_game();
 			}
 		}
+	} else {
+		for (int i = 0; i <= 16; i++) {
+			CLOUD* c = &clouds[i];
+			c->x += c->spd;
+			if (c->x > 128) {
+				c->x = -c->w;
+				c->y = P8rnd(128-8);
+			}
+		}
 	}
 }
 
@@ -1761,12 +1796,7 @@ void Celeste_P8_draw() {
 	if (!is_title()) {
 		for (int i = 0; i <= 16; i++) {
 			CLOUD* c = &clouds[i];
-			c->x += c->spd;
 			P8rectfill(c->x,c->y,c->x+c->w,c->y+4+(1-c->w/64.0)*12,new_bg ? 14 : 1);
-			if (c->x > 128) {
-				c->x = -c->w;
-				c->y = P8rnd(128-8);
-			}
 		}
 	}
 
@@ -1804,27 +1834,15 @@ void Celeste_P8_draw() {
 	// particles
 	for (int i = 0; i <= 24; i++) {
 		PARTICLE* p = &particles[i];
-		p->x += p->spd;
-		p->y += P8sin(p->off);
-		p->off+= P8min(0.05,p->spd/32);
 		P8rectfill(p->x,p->y,p->x+p->s,p->y+p->s,p->c);
-		if (p->x>128+4) { 
-			p->x=-4;
-			p->y=P8rnd(128);
-		}
+
 		p++;
 	}
    
 	// dead particles
 	for (int i = 0; i <= 7; i++) {
 		PARTICLE* p = &dead_particles[i];
-		if (p->active) {
-			p->x += p->spd2.x;
-			p->y += p->spd2.y;
-			p->t -=1;
-			if (p->t <= 0) { p->active = false; }
-			P8rectfill(p->x-p->t/5,p->y-p->t/5,p->x+p->t/5,p->y+p->t/5,14+P8modulo(p->t,2));
-		}
+		if (p->active) { P8rectfill(p->x-p->t/5,p->y-p->t/5,p->x+p->t/5,p->y+p->t/5,14+P8modulo(p->t,2)); }
 
 		p++;
 	}
