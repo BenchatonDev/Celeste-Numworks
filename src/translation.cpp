@@ -464,6 +464,8 @@ void emuInput() {
 			emuPause = false;
 			emuSettings = false;
 			emuSaveEnabled = false;
+			emuAutoSaveFirst = true;
+			emuSaveJustLoaded = true;
 			
 			gameInit(true);
 		}
