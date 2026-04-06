@@ -120,7 +120,7 @@ int writeSave(bool backupOldSave) {
     size_t fileLen = 0;
     const char* fileData = extapp_fileRead(saveName, &fileLen);
 
-    if (backupOldSave) {
+    if (backupOldSave && fileHeader.slot1Valid) {
         // This SHOULD copy the data from the main slot to the backup one, hopefully
         memcpy((void*)(slot1Pointer(fileData) + stateSize), (void*)(slot1Pointer(fileData)), stateSize);
         fileHeader.slot2Valid = true;
