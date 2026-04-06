@@ -16,11 +16,12 @@ A working, albeit janky and unoptimized port of ccleste by [Lemon Sherbet](https
   - `BACK`: Jump
   - `Dpad`: Moves around
 - General
-  - `Backspace` : Pause
-  - `Shift` : Create SaveState
-  - `Alpha` : Load SaveState
+  - `Backspace` : Pauses the game
+  - `Toolbox` : Opens the settings
+  - `Shift` : Creates a new save
+  - `Alpha` : Loads a save
+  - `Ans` : Loads a backup save
   - `XNT` : Reset
-  - `ScreenShake On/Off` : Toolbox
   - `Home`: Exit
 
 
