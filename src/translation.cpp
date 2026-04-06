@@ -12,7 +12,7 @@ bool screenShake = true;
 bool emuPause = false;
 bool emuSettings = emuPause;
 bool emuAutoSave = false;
-bool emuAutoLoad = false;
+bool emuAutoLoad = true;
 bool emuSaveEnabled = false;
 bool emuAutoSaveFirst = true;
 bool emuSaveJustLoaded = false;
@@ -475,7 +475,7 @@ void emuInput() {
         && !lastState.keyDown(Keyboard::Key::Shift)) {
 		int status = writeSave(true);
 
-		if (status == SAVES_SUCCESS) { OSDset("Progress saved"); }
+		if (status == SAVES_SUCCESS) { OSDset("Progress saved"); emuAutoSaveFirst = true; }
 		else if (status == SAVES_NOTHING_TO_DO) { OSDset("Nothing to save");}
 		else { OSDset("Couldn't save");}
 	}
