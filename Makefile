@@ -77,7 +77,7 @@ else # PLATFORM=web
   SIMULATOR ?= epsilon_simulators/web/epsilon.html
 endif
 
-NWLINK = npx --yes -- nwlink@0.0.19
+NWLINK = npx --yes -- nwlink@latest
 BUILD_DIR = target/$(PLATFORM)
 
 define object_for
@@ -86,7 +86,7 @@ endef
 
 CFLAGS = $(shell $(NWLINK) eadk-cflags-$(PLATFORM))
 LDFLAGS = $(shell $(NWLINK) eadk-ldflags-$(PLATFORM))
-CXXFLAGS = $(CFLAGS) -std=c++11 -fno-exceptions -Wall -ggdb
+CXXFLAGS = $(CFLAGS) -std=c++11 -fno-exceptions -Wall -ggdb -funroll-loops
 
 ifeq ($(DEBUG_BUILD), 1)
 CXXFLAGS += -DDEBUG_BUILD
