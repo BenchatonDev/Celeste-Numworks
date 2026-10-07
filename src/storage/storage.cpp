@@ -14,6 +14,7 @@ inline uint32_t reverse32(uint32_t value) {
           ((value & 0xFF000000) >> 24));
 }
 
+
 // This function takes extension for compatibility reasons, but ignores it
 int extapp_fileList(const char ** filename, int maxrecord, const char * extension) {
   uint32_t storageAddress = extapp_address();
@@ -223,7 +224,7 @@ bool extapp_fileErase(const char * filename) {
 
   // Move the rest of the data
   char * nextFree = (char *)extapp_nextFree();
-  memmove(offset, offset + len, nextFree - offset);
+  memmove(offset, offset + len, nextFree - (offset + len));
 
   // Overwrite the rest of the storage with zeroes
   memset(nextFree - len, 0, len);
@@ -277,46 +278,33 @@ bool extapp_isValid(const uint32_t * address) {
 }
 
 const uint8_t extapp_calculatorModel() {
-  // To guess the storage size without reading forbidden addresses, we try to
-  // get the storage address from the userland header
+  uint32_t stackObject;
+  uint32_t stackPointer = (uint32_t)&stackObject;
 
-  uint32_t * userlandMagicSlotAN0110 = *(uint32_t **)0x90010000;
-  uint32_t * userlandMagicSlotBN0110 = *(uint32_t **)0x90410000;
-  uint32_t * userlandMagicSlotAN0120 = *(uint32_t **)0x90020000;
-  uint32_t * userlandMagicSlotBN0120 = *(uint32_t **)0x90420000;
-
-  // On N0110, RAM start is at 0x20000000 and end is 0x20040000
-  // On N0120, RAM start is at 0x20040000
-  bool userlandMagicSlotAN0110IsValid = reverse32(0xfeedc0de) == (uint32_t)userlandMagicSlotAN0110;
-  bool userlandMagicSlotBN0110IsValid = reverse32(0xfeedc0de) == (uint32_t)userlandMagicSlotBN0110;
-  // TODO: Check the end address on N0120 (should be working, but good to check anyway)
-  bool userlandMagicSlotAN0120IsValid = reverse32(0xfeedc0de) == (uint32_t)userlandMagicSlotAN0120;
-  bool userlandMagicSlotBN0120IsValid = reverse32(0xfeedc0de) == (uint32_t)userlandMagicSlotBN0120;
-
-  int N0110Counter = userlandMagicSlotAN0110IsValid + userlandMagicSlotBN0110IsValid;
-  int N0120Counter = userlandMagicSlotAN0120IsValid + userlandMagicSlotBN0120IsValid;
-
-  // At least one slot indicate N0110 and none N0120
-  if ((N0110Counter > 0) && (N0120Counter == 0)) {
+  // N0110/N0115 have addresses in the 0x20000000-0x2003FFFF range.
+  if ((stackPointer >= 0x20000000) && (stackPointer <= 0x2003FFFF)) {
     return 1;
   }
 
-  // At least one slot indicate N0120 and none N0110
-  if ((N0120Counter > 0) && (N0110Counter == 0)) {
+  // N0120 have addresses in the 0x24000000-0x2404FFFF range.
+  if ((stackPointer >= 0x24000000) && (stackPointer <= 0x2404FFFF)) {
     return 2;
   }
 
-  // In case where both matched, choose the one with most matches (for example,
-  // if slot data made a false positive (should not happen unless someone flash
-  // the wrong firmware on a calculator))
-  if (N0110Counter > N0120Counter) {
-    return 1;
-  } if (N0120Counter > N0110Counter) {
-    return 2;
-  }
+  // Other RAM memory regions, unused for now, code is untested so disabled for
+  // now
+  // if ((stackPointer >= 0x20000000) && (stackPointer <= 0x2001FFFF)) {
+  //   return 2;
+  // }
+  // if ((stackPointer >= 0x30000000) && (stackPointer <= 0x30007FFF)) {
+  //   return 2;
+  // }
+  // if ((stackPointer >= 0x38000000) && (stackPointer <= 0x38003FFF)) {
+  //   return 2;
+  // }
 
-  // The remaining cases is equality (no match or as much matches). In both
-  // cases, we cannot know
+  // We can't know which model is currently used if the stack is outside known
+  // addresses
   return 0;
 }
 
@@ -324,9 +312,22 @@ const uint32_t extapp_userlandAddress() {
   // Get the model
   const uint8_t model = extapp_calculatorModel();
 
+  // 0x2X000008 had corruption issues on some versions, so we avoid using it
+  // Instead, we compute the value based on 0x2X000004
+
   if (model == 1) {
-    return (*(uint32_t *)0x20000004) + 0x10000 - 0x8;
-    // return *(uint32_t *)0x20000008;
+    // On N0110/N0115, the offset can be 0x20000 or 0x10000, depending on the
+    // Epsilon version (0x20000 on Epsilon 26.4.0+).
+    // We're trying both, and check the magic value of the header to guess the
+    // valid one.
+    if (*(uint32_t *)((*(uint32_t *)0x20000004) + 0x20000 - 0x8) == reverse32(0xFEEDC0DE)) {
+      return (*(uint32_t *)0x20000004) + 0x20000 - 0x8;
+    } if (*(uint32_t *)((*(uint32_t *)0x20000004) + 0x10000 - 0x8) == reverse32(0xFEEDC0DE)) {
+      return (*(uint32_t *)0x20000004) + 0x10000 - 0x8;
+    }
+
+    // Failsafe, if both are invalid, keep going with the newest version
+    return (*(uint32_t *)0x20000004) + 0x20000 - 0x8;
   } if (model == 2) {
     return (*(uint32_t *)0x24000004) + 0x20000 - 0x8;
     // return *(uint32_t *)0x24000008;
