@@ -32,7 +32,7 @@ You'll need a few dependencies, if you are on MacOS, Windows or a Debian based d
 yay -S arm-none-eabi-gcc arm-none-eabi-newlib numworks-udev nodejs npm [numworks-epsilon]
 ```
 
-(The simulator binary can be found [here](https://github.com/emilie-feral/rpn-app/raw/refs/heads/main/epsilon_simulators.zip) for all platforms, note that on Linux it's expected that numworks-epsilon is in your path).
+(The simulator binary can be found [here](https://github.com/emilie-feral/rpn-app/raw/refs/heads/main/epsilon_simulators.zip) for all platforms, note that on Linux it's expected that numworks-epsilon is in your $PATH).
 
 To compile the project run :
 ```
