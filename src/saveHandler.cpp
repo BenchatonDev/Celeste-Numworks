@@ -166,6 +166,9 @@ int savesInit() { saveSystemInitiliazed = true; return SAVES_SUCCESS; }
 
 int savesShutDown() { free(gameState); free(backupState); saveSystemInitiliazed = false; return SAVES_SUCCESS; }
 
+bool slotValid(bool backupSlot) {
+    return backupSlot ? fileHeader.slot2Valid : fileHeader.slot1Valid;
+}
 
 int writeSave(bool backupOldSave) {
     if (!saveSystemInitiliazed) { return SAVES_FAIL; }
