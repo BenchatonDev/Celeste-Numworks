@@ -1179,6 +1179,7 @@ static void FLY_FRUIT_init(OBJ* this) {
 	this->step=0.5;
 	this->solids=false;
 }
+
 static void FLY_FRUIT_update(OBJ* this) {
 	bool do_destroy_object = false; //LEMON: see PLAYER_update..
 	//fly away
@@ -1203,8 +1204,10 @@ static void FLY_FRUIT_update(OBJ* this) {
 		init_object(OBJ_LIFEUP,this->x,this->y);
 		do_destroy_object = true;
 	}
+
 	if (do_destroy_object) { destroy_object(this); score++;};
 }
+
 static void FLY_FRUIT_draw(OBJ* this) {
 	float off=0;
 	if (!this->fly) {
